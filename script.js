@@ -579,7 +579,7 @@ function renderGrid() {
 
         filteredItems.forEach(nexo => {
             const card = document.createElement('div');
-            card.className = `relative rounded-xl p-4 flex flex-col items-center justify-between border transition-all cursor-pointer ${
+            card.className = `relative rounded-xl p-3 xl:p-4 flex flex-col items-center justify-between border transition-all cursor-pointer ${
                 nexo.caught 
                     ? 'bg-slate-900/80 dark:bg-slate-900/80 bg-white border-emerald-500/40 shadow-lg shadow-emerald-950/20' 
                     : 'bg-slate-900/40 dark:bg-slate-900/40 bg-slate-50 border-slate-800/80 opacity-60 hover:opacity-100'
@@ -601,12 +601,12 @@ function renderGrid() {
                 </div>
                 <div class="text-center w-full">
                     <p class="font-bold text-sm text-slate-200 dark:text-slate-200 text-slate-800 truncate">${nexo.name}</p>
-                    <div class="flex flex-wrap gap-1 mt-2 justify-center">
-                        <span class="text-[10px] px-2 py-0.5 rounded border flex items-center gap-1.5 ${elemConfig.bg} ${elemConfig.textColor}">
-                            <img src="${elemConfig.iconPath}" alt="${nexo.element}" class="w-3 h-3 object-contain" onerror="this.style.display='none';">
-                            ${nexo.element}
+                    <div class="flex flex-nowrap items-center justify-center gap-1 mt-2 w-full">
+                        <span class="text-[9px] xl:text-[10px] px-1 sm:px-1.5 py-0.5 rounded border inline-flex items-center justify-center gap-1 whitespace-nowrap leading-tight ${elemConfig.bgStyle} ${elemConfig.textColor}">
+                            <img src="${elemConfig.iconPath}" alt="${nexo.element}" class="w-3 h-3 object-contain shrink-0" onerror="this.style.display='none';">
+                            <span>${nexo.element}</span>
                         </span>
-                        <span class="text-[10px] px-2 py-0.5 rounded border ${getRarityBadgeStyle(nexo.rarity)}">${nexo.rarity}</span>
+                        <span class="text-[9px] xl:text-[10px] px-1 sm:px-1.5 py-0.5 rounded border inline-flex items-center justify-center whitespace-nowrap leading-tight ${getRarityBadgeStyle(nexo.rarity)}">${nexo.rarity}</span>
                     </div>
                 </div>
             `;
