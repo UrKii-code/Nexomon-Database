@@ -1,0 +1,16 @@
+{
+  "name": "nexomon-database",
+  "version": "1.0.0",
+  "description": "Nexomon Tracker Database",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node --check server.js && node --check script.js && node --check nexomon-data.js",
+    "lint": "node --check server.js && node --check script.js && node --check nexomon-data.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

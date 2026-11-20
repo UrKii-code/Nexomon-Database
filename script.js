@@ -1,46 +1,44 @@
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-    apiKey: "AIzaSyBeXvF8Wdx0JTYS43nC2-b2drT8JEpah0o",
-    authDomain: "nexomondatabase.firebaseapp.com",
-    projectId: "nexomondatabase",
-    storageBucket: "nexomondatabase.firebasestorage.app",
-    messagingSenderId: "988899419548",
-    appId: "1:988899419548:web:c0eddb30d9e64ccc329459",
-    measurementId: "G-5QBKXED591"
-  };
+const firebaseConfig = window.__FIREBASE_CONFIG__ || null;
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const auth = firebase.auth();
-const db = firebase.firestore();
-
+let auth = null;
+let db = null;
 let currentUserId = null;
 
-// Listen for global authentication state changes
-auth.onAuthStateChanged(async (user) => {
-    const authContainer = document.getElementById('auth-container');
-    const profileView = document.getElementById('user-profile-view');
-    const emailDisplay = document.getElementById('logged-in-email');
-
-    if (user) {
-        currentUserId = user.uid;
-        if (authContainer) authContainer.classList.add('hidden');
-        if (profileView) profileView.classList.remove('hidden');
-        if (emailDisplay) emailDisplay.innerText = user.email;
-
-        await loadCloudData(user.uid);
-    } else {
-        currentUserId = null;
-        if (authContainer) authContainer.classList.remove('hidden');
-        if (profileView) profileView.classList.add('hidden');
-        loadSavedData();
+if (firebaseConfig && firebaseConfig.apiKey && typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
-    renderGrid();
-});
+    auth = firebase.auth();
+    db = firebase.firestore();
+
+    // Listen for global authentication state changes
+    auth.onAuthStateChanged(async (user) => {
+        const authContainer = document.getElementById('auth-container');
+        const profileView = document.getElementById('user-profile-view');
+        const emailDisplay = document.getElementById('logged-in-email');
+
+        if (user) {
+            currentUserId = user.uid;
+            if (authContainer) authContainer.classList.add('hidden');
+            if (profileView) profileView.classList.remove('hidden');
+            if (emailDisplay) emailDisplay.innerText = user.email;
+
+            await loadCloudData(user.uid);
+        } else {
+            currentUserId = null;
+            if (authContainer) authContainer.classList.remove('hidden');
+            if (profileView) profileView.classList.add('hidden');
+            loadSavedData();
+        }
+        renderGrid();
+    });
+}
 
 function handleEmailSignUp() {
+    if (!auth) {
+        alert("Cloud sync is not configured. Progress is saved locally in your browser.");
+        return;
+    }
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
     if (!email || !password) {
@@ -53,6 +51,10 @@ function handleEmailSignUp() {
 }
 
 function handleEmailLogin() {
+    if (!auth) {
+        alert("Cloud sync is not configured. Progress is saved locally in your browser.");
+        return;
+    }
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
     if (!email || !password) {
@@ -65,6 +67,7 @@ function handleEmailLogin() {
 }
 
 function handleFirebaseLogout() {
+    if (!auth) return;
     auth.signOut().then(() => {
         alert("Logged out successfully.");
         location.reload();
@@ -77,7 +80,7 @@ function toggleCaught(id) {
     if (nexo) {
         nexo.caught = !nexo.caught;
         
-        if (currentUserId) {
+        if (currentUserId && db) {
             saveCollectionToCloud();
         } else {
             const caughtIds = nexomonDatabase.filter(n => n.caught).map(n => n.id);
@@ -89,7 +92,7 @@ function toggleCaught(id) {
 }
 
 async function saveCollectionToCloud() {
-    if (!currentUserId) return;
+    if (!currentUserId || !db) return;
     const caughtIds = nexomonDatabase.filter(n => n.caught).map(n => n.id);
     try {
         await db.collection("users").doc(currentUserId).set({
@@ -102,6 +105,7 @@ async function saveCollectionToCloud() {
 }
 
 async function loadCloudData(uid) {
+    if (!db) return;
     try {
         const docRef = await db.collection("users").doc(uid).get();
         if (docRef.exists) {
@@ -117,6 +121,10 @@ async function loadCloudData(uid) {
 }
 
 async function handleAccountDeletion() {
+    if (!auth || !db) {
+        alert("No cloud account is currently signed in.");
+        return;
+    }
     const user = auth.currentUser;
     if (!user) {
         alert("No user is currently signed in.");
