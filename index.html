@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexomon Tracker Database</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 bg-slate-100 text-slate-900 font-sans min-h-screen transition-colors duration-200">
+
+    <!-- Top Header Layout -->
+    <header class="bg-slate-900 dark:bg-slate-900 bg-white border-b border-slate-800 dark:border-slate-800 border-slate-200 sticky top-0 z-50 px-6 py-3 flex items-center justify-between shadow-md">
+        <!-- Left Side: Custom Nexomon Logo Image -->
+        <div class="flex items-center gap-2">
+            <img id="app-logo" src="images/logo.png" alt="Nexomon Logo" class="h-12 w-auto object-contain" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='block';">
+            <span id="fallback-logo" class="font-black text-xl tracking-wider text-emerald-500 hidden">NEXOMON</span>
+        </div>
+
+        <!-- Right Side: Theme Toggle & Navigation Items -->
+        <div class="flex items-center gap-6 text-sm font-medium">
+            <!-- Theme Toggle Button -->
+            <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-amber-400 hover:text-amber-300 transition p-1.5 rounded-lg bg-slate-800/50 dark:bg-slate-800/50 bg-slate-200">
+                <!-- Sun Icon -->
+                <svg id="theme-icon-sun" class="w-5 h-5 block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2m-4.22-7.78l1.42-1.42M6.34 17.66l-1.42 1.42"></path></svg>
+                <!-- Moon Icon -->
+                <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+
+            <!-- Navigation Links -->
+            <nav class="flex items-center gap-6">
+                <button onclick="switchTab('collection')" id="nav-collection" class="flex items-center gap-2 text-amber-500 transition font-semibold">
+                    <span>📚</span> <span id="nav-collection-text">Collections</span>
+                </button>
+                <button onclick="switchTab('location')" id="nav-map" class="flex items-center gap-2 text-slate-400 hover:text-slate-200 transition">
+                    <span>🗺️</span> <span id="nav-map-text">Map</span>
+                </button>
+                <button onclick="switchTab('profile')" id="nav-profile" class="flex items-center gap-2 text-slate-400 hover:text-slate-200 transition">
+                    <span>👤</span> <span id="nav-profile-text">Profile</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Dynamic Content Container -->
+    <main class="w-full p-0">
+        
+        <!-- Tab 1: Collection View -->
+        <div id="tab-collection" class="w-full space-y-6">
+            <!-- Full-Width Header Bar -->
+            <div class="w-full bg-slate-900/60 dark:bg-slate-900/60 bg-white/60 px-6 py-4 border-b border-slate-800 dark:border-slate-800 border-slate-200 flex flex-col xl:flex-row items-center justify-between gap-4">
+                
+                <!-- Left Side: Icon + Title & Progress -->
+                <div class="flex items-center gap-3 w-full xl:w-auto">
+                    <img id="nexotrap-icon" src="images/nexotrap.png" alt="Nexotrap" class="w-10 h-10 object-contain" onerror="this.style.display='none'; document.getElementById('fallback-trap').style.display='flex';">
+                    <div id="fallback-trap" class="w-10 h-10 rounded-full bg-red-500 border-2 border-white flex items-center justify-center text-white font-bold text-xs hidden">⚾</div>
+                    
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 id="text-collection-title" class="font-black text-sm tracking-wide text-slate-100">COLLECTION DATABASE</h1>
+                        </div>
+                        <p id="total-progress" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Search bar & Status Filters -->
+                <div class="flex items-center gap-2 w-full xl:w-auto justify-end flex-wrap">
+                    <!-- Search Bar -->
+                    <input type="text" id="search-input" placeholder="Search..." 
+                        class="bg-slate-950 dark:bg-slate-950 bg-slate-100 border border-slate-700 dark:border-slate-700 border-slate-300 rounded-lg px-4 py-2 text-sm w-full sm:w-64 focus:outline-none focus:border-emerald-500">
+
+                    <!-- Status Filter Tabs -->
+                    <div class="flex bg-slate-950 dark:bg-slate-950 bg-slate-100 border border-slate-800 dark:border-slate-800 border-slate-300 rounded-lg p-1 text-xs font-semibold gap-1">
+                        <button onclick="filterStatus('all')" id="btn-all" class="px-4 py-1.5 rounded-md bg-white text-slate-950 font-bold shadow transition">All</button>
+                        <button onclick="filterStatus('have')" id="btn-caught" class="px-4 py-1.5 rounded-md text-slate-400 hover:text-white transition">Have</button>
+                        <button onclick="filterStatus('need')" id="btn-missing" class="px-4 py-1.5 rounded-md text-slate-400 hover:text-white transition">Need</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rarity Filter Pills -->
+            <div class="px-6 sticky top-[73px] z-40 bg-slate-950/95 backdrop-blur-md py-3 border-b border-slate-800/50">
+                <nav class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                    <button onclick="filterRarity('Common')" id="rarity-btn-common" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-common">Common</span></button>
+                    <button onclick="filterRarity('Uncommon')" id="rarity-btn-uncommon" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-emerald-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-uncommon">Uncommon</span></button>
+                    <button onclick="filterRarity('Rare')" id="rarity-btn-rare" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-blue-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-rare">Rare</span></button>
+                    <button onclick="filterRarity('Mega Rare')" id="rarity-btn-mega-rare" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-purple-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-mega-rare">Mega Rare</span></button>
+                    <button onclick="filterRarity('Special')" id="rarity-btn-special" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-pink-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-special">Special</span></button>
+                    <button onclick="filterRarity('Legendary')" id="rarity-btn-legendary" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-amber-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-legendary">Legendary</span></button>
+                </nav>
+            </div>
+
+            <!-- Grid Header & Results Organized by Rarity -->
+            <div class="px-6 space-y-8">
+                <!-- Common Section -->
+                <div id="section-common" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-common" class="text-xl font-black text-slate-100 tracking-wide">Common</h2>
+                            <p id="section-stats-common" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-common" onclick="toggleSelectAll('Common')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-common" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Uncommon Section -->
+                <div id="section-uncommon" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-uncommon" class="text-xl font-black text-emerald-400 tracking-wide">Uncommon</h2>
+                            <p id="section-stats-uncommon" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-uncommon" onclick="toggleSelectAll('Uncommon')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-uncommon" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Rare Section -->
+                <div id="section-rare" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-rare" class="text-xl font-black text-blue-400 tracking-wide">Rare</h2>
+                            <p id="section-stats-rare" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-rare" onclick="toggleSelectAll('Rare')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-rare" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Mega Rare Section -->
+                <div id="section-mega-rare" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-mega-rare" class="text-xl font-black text-purple-400 tracking-wide">Mega Rare</h2>
+                            <p id="section-stats-mega-rare" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-mega-rare" onclick="toggleSelectAll('Mega Rare')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-mega-rare" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Special Section -->
+                <div id="section-special" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-special" class="text-xl font-black text-pink-400 tracking-wide">Special</h2>
+                            <p id="section-stats-special" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-special" onclick="toggleSelectAll('Special')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-special" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Legendary Section -->
+                <div id="section-legendary" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-legendary" class="text-xl font-black text-amber-400 tracking-wide">Legendary</h2>
+                            <p id="section-stats-legendary" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-legendary" onclick="toggleSelectAll('Legendary')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-legendary" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Map View -->
+        <div id="tab-location" class="hidden h-[calc(100vh-80px)] flex flex-col justify-between p-3 overflow-hidden select-none">
+    
+            <!-- Main Horizontal Row: Left Area, Center Map, Right Nexomon -->
+            <div class="grid grid-cols-12 gap-3 max-w-[1600px] mx-auto w-full flex-1 min-h-0">
+        
+            <!-- Left Side: Area List -->
+            <div class="col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-full min-h-0">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2 mb-3 shrink-0">Regions & Areas</h4>
+                <div id="region-list-container" class="space-y-2 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                    <button onclick="selectArea('Parum')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Parum</span></button>
+                    <button onclick="selectArea('Mountain Village')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Mountain Village</span></button>
+                    <button onclick="selectArea('Ignitia')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/60 text-slate-200 hover:bg-slate-800 transition flex justify-between items-center"><span>Ignitia</span></button>
+                    <button onclick="selectArea('Khan\'s Jungle')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Khan's Jungle</span></button>
+                    <button onclick="selectArea('Hidden Village')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Hidden Village</span></button>
+                    <button onclick="selectArea('Hilda\'s Domain')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Hilda's Domain</span></button>
+                    <button onclick="selectArea('Phantom Citadel')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Phantom Citadel</span></button>
+                    <button onclick="selectArea('Solus Desert')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Solus Desert</span></button>
+                    <button onclick="selectArea('Frozen Tundra')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Frozen Tundra</span></button>
+                    <button onclick="selectArea('Nexolord Tower')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Nexolord Tower</span></button>
+                    <button onclick="selectArea('Royalle City')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Royalle City</span></button>
+                    <button onclick="selectArea('Palmaya Beach')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Palmaya Beach</span></button>
+                </div>
+            </div>
+
+            <!-- Center: World Map with Absolute Pins (6 Columns) -->
+            <div class="col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-full relative">
+                <div class="text-center mb-2">
+                    <h3 id="text-map-title" class="text-sm font-bold text-amber-400">World Map & Regional Habitats</h3>
+                    <p id="text-map-subtitle" class="text-[11px] text-slate-400">Select a region to view native Nexomon species and encounter locations.</p>
+                </div>
+    
+                <!-- Expanded Map Relative Container -->
+                <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden rounded-lg border border-slate-800/80 shadow-2xl my-1 bg-slate-950/50">
+                    <img src="images/worldmap1.png" alt="Nexomon World Map" class="w-full h-full max-h-[600px] object-contain select-none">
+
+                    <!-- All Interactive Map Pins -->
+                    <button onclick="selectArea('Parum')" class="absolute top-[63%] left-[14%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="1. Parum">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Mountain Village')" class="absolute top-[39%] left-[18%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="2. Mountain Village">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Ignitia')" class="absolute top-[47%] left-[32%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="3. Ignitia">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Khan\'s Jungle')" class="absolute top-[84%] left-[26%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="4. Khan's Jungle">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Hidden Village')" class="absolute top-[79%] left-[35%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="5. Hidden Village">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Hilda\'s Domain')" class="absolute top-[52%] left-[51%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="6. Hilda's Domain">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Phantom Citadel')" class="absolute top-[70%] left-[57%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="7. Phantom Citadel">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Solus Desert')" class="absolute top-[52%] left-[70%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="8. Solus Desert">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Frozen Tundra')" class="absolute top-[75%] left-[90%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="9. Frozen Tundra">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Nexolord Tower')" class="absolute top-[48%] left-[90%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="10. Nexolord Tower">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Royalle City')" class="absolute top-[22%] left-[70%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="11. Royalle City">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+
+                    <button onclick="selectArea('Palmaya Beach')" class="absolute top-[23%] left-[53%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="12. Palmaya Beach">
+                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
+                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Nexomon Species List (3 Columns) - Make scrollable -->
+            <div class="col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-full min-h-0">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3 shrink-0">
+                    <h4 id="selected-region-title" class="text-xs font-bold text-amber-400 uppercase tracking-wider">Nexomon</h4>
+                    <span id="region-species-count" class="text-[10px] text-slate-400 font-medium">12 Species</span>
+                </div>
+                <div id="region-species-grid" class="grid grid-cols-2 gap-2 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                <!-- Dynamically populated species cards go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Filter Footer (Fixed layout span) -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 max-w-[1600px] mx-auto w-full shadow-lg mt-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <!-- Search Bar -->
+                <div class="flex-1 min-w-[200px]">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">🔍</span>
+                        <input type="text" id="map-search-input" placeholder="Search habitat or species..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <!-- Filter Dropdowns -->
+                <div class="flex flex-wrap gap-2">
+                    <select id="filter-region-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="">Region ▼</option>
+                    </select>
+                    <select id="filter-habitat-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="">Habitat ▼</option>
+                    </select>
+                    <select id="filter-type-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="">Type ▼</option>
+                    </select>
+                    <select id="filter-rarity-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                        <option value="">Rarity ▼</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Tab 3: Profile View -->
+        <div id="tab-profile" class="hidden max-w-2xl mx-auto px-6 py-8 space-y-6">
+            <h2 class="text-lg font-bold text-slate-200 mb-2">Profile</h2>
+            
+            <div class="bg-slate-900 dark:bg-slate-900 bg-white border border-slate-800 dark:border-slate-800 border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <!-- Trainer Avatar Image with Transparent Border & Background -->
+                    <div class="relative w-12 h-12 bg-transparent">
+                        <img src="images/trainer.png" alt="Trainer Avatar" class="w-12 h-12 rounded-full object-cover border-0 bg-transparent" onerror="this.style.display='none'; document.getElementById('fallback-avatar').style.display='flex';">
+                        <div id="fallback-avatar" class="w-12 h-12 rounded-full bg-slate-800 border-0 items-center justify-center text-xl hidden absolute inset-0">🧢</div>
+                    </div>
+                    <div>
+                        <p id="text-trainer-label" class="text-xs text-slate-400 font-semibold">Nexomon Trainer</p>
+                        <input type="text" id="tamer-name-input" value="Master Tamer" class="bg-transparent text-sm font-bold text-slate-200 focus:outline-none focus:border-b border-amber-500">
+                    </div>
+                </div>
+                <button onclick="alert('Trainer name updated!')" class="text-slate-400 hover:text-white text-xs">✏️</button>
+            </div>
+
+            <!-- Profile Tab Trainer Account Sync Card Item -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3" id="auth-container">
+                <h3 id="form-trainer-label" class="text-sm font-bold text-amber-400">Trainer Account Sync</h3>
+            
+                <input type="email" id="auth-email" placeholder="Email address" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                <input type="password" id="auth-password" placeholder="Password" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+            
+                <div class="flex gap-2 pt-1">
+                    <button id="btn-register" onclick="handleEmailSignUp()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-2 rounded-lg border border-slate-700 transition">Register</button>
+                    <button id="btn-login" onclick="handleEmailLogin()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs py-2 rounded-lg transition">Log In</button>
+                </div>
+            </div>
+            
+            <div id="user-profile-view" class="hidden bg-emerald-950/30 border border-emerald-800/50 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-emerald-400" id="logged-in-email"></p>
+                    <p id="text-cloud-sync" class="text-[10px] text-emerald-300/70">Cloud Sync Active</p>
+                </div>
+                <button id="text-logout" onclick="handleFirebaseLogout()" class="bg-red-600/25 hover:bg-red-600/40 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-800/50 transition">Log out</button>
+            </div>
+
+            <!-- Profile Tab Collection Item -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <p id="profile-collection-count"
+                       class="text-xl font-black text-emerald-400">
+                        0
+                    </p>
+                    <p id="text-collected-label" class="text-xs text-slate-400 mt-1">
+                        Collected
+                    </p>
+                </div>
+            
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <p id="profile-collection-percent"
+                       class="text-xl font-black text-amber-400">
+                        0%
+                    </p>
+                    <p id="text-completion-label" class="text-xs text-slate-400 mt-1">
+                        Completion
+                    </p>
+                </div>
+            
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <p class="text-xl font-black text-slate-200">
+                        310
+                    </p>
+                    <p id="text-total-label" class="text-xs text-slate-400 mt-1">
+                        Total
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile Tab Language System Item -->
+            <div class="bg-slate-900 dark:bg-slate-900 bg-white border border-slate-800 dark:border-slate-800 border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">🌐</span>
+                    <span id="text-language-label" class="text-sm font-semibold text-slate-200">Language</span>
+                </div>
+                <div class="flex bg-slate-950 p-1 rounded-lg text-xs font-semibold gap-1">
+                    <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 rounded bg-emerald-600 text-white transition">English</button>
+                    <button onclick="setLanguage('ms')" id="lang-ms" class="px-3 py-1 rounded text-slate-400 hover:text-white transition">Bahasa Melayu</button>
+                    <button onclick="setLanguage('zh')" id="lang-zh" class="px-3 py-1 rounded text-slate-400 hover:text-white transition">中文</button>
+                </div>
+            </div>
+
+            <!-- Profile Tab Delete Account Item -->
+            <div class="bg-red-950/20 border border-red-900/40 rounded-xl p-4 space-y-2">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">⚠️</span>
+                    <div>
+                        <p id="text-delete-title" class="text-sm font-bold text-red-400">Delete account</p>
+                        <p id="text-delete-desc" class="text-xs text-slate-400">Once you delete your account, there is no going back. Please be certain.</p>
+                    </div>
+                </div>
+                <button id="btn-delete-account" onclick="handleAccountDeletion()" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 text-xs px-3 py-1.5 rounded-lg border border-red-800/50 transition">Delete Account</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="nexomon-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
