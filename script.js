@@ -294,7 +294,7 @@ function initMapFilters() {
             regionSelect.appendChild(opt);
         });
         regionSelect.addEventListener('change', (e) => {
-            selectArea(e.target.value);
+            selectArea(e.target.value, true);
         });
     }
 
@@ -458,8 +458,9 @@ function renderLocationTab() {
     });
 }
 
-function selectArea(areaName) {
-    selectedMapRegion = areaName || '';
+function selectArea(areaName, force = false) {
+    const nextRegion = areaName || '';
+    selectedMapRegion = (!force && nextRegion && selectedMapRegion === nextRegion) ? '' : nextRegion;
 
     // 1. Update right panel header title and icon
     const regionTitle = document.getElementById('selected-region-title');
