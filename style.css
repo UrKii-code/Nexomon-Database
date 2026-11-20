@@ -1,26 +1,36 @@
-/* Custom scrollbar utility hiding */
+/* style.css - Custom scrollbars & layout polish (Tailwind utilities handle component styling) */
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Custom Scrollbar for Dark Theme Containers */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
+  height: 6px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #1e293b; /* Matches slate-800 */
-    border-radius: 4px;
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.7);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #334155; /* Matches slate-700 on hover */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+#map-viewport {
+  touch-action: none;
+}
+
+#map-zoom-layer {
+  transform-origin: center center;
+  will-change: transform;
 }

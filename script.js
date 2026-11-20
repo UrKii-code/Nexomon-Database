@@ -229,18 +229,19 @@ function switchTab(tabName) {
 }
 
 const MAP_REGIONS = [
-    { name: 'Parum', habitat: 'Grass', elements: ['Normal', 'Plant', 'Wind', 'Electric', 'Water', 'Fire'], rarities: ['Common', 'Uncommon', 'Rare'] },
-    { name: 'Mountain Village', habitat: 'Cave', elements: ['Mineral', 'Wind', 'Normal', 'Fire'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare'] },
-    { name: 'Ignitia', habitat: 'Volcano', elements: ['Fire', 'Mineral', 'Electric'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
-    { name: "Khan's Jungle", habitat: 'Jungle', elements: ['Plant', 'Wind', 'Water', 'Normal'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare'] },
-    { name: 'Hidden Village', habitat: 'Forest', elements: ['Plant', 'Electric', 'Wind', 'Normal'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
-    { name: "Hilda's Domain", habitat: 'Manor', elements: ['Normal', 'Electric', 'Wind', 'Plant'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special'] },
-    { name: 'Phantom Citadel', habitat: 'Ruins', elements: ['Mineral', 'Electric', 'Fire', 'Wind', 'Normal'], rarities: ['Rare', 'Mega Rare', 'Special', 'Legendary'] },
-    { name: 'Solus Desert', habitat: 'Desert', elements: ['Mineral', 'Fire', 'Normal', 'Electric'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Legendary'] },
-    { name: 'Frozen Tundra', habitat: 'Snow', elements: ['Water', 'Wind', 'Mineral'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
-    { name: 'Nexolord Tower', habitat: 'Tower', elements: ['Electric', 'Fire', 'Mineral', 'Wind', 'Water', 'Plant', 'Normal'], rarities: ['Rare', 'Mega Rare', 'Special', 'Legendary'] },
-    { name: 'Royalle City', habitat: 'Urban', elements: ['Normal', 'Electric', 'Water', 'Wind'], rarities: ['Common', 'Uncommon', 'Rare', 'Special'] },
-    { name: 'Palmaya Beach', habitat: 'Beach', elements: ['Water', 'Wind', 'Plant', 'Normal'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Legendary'] }
+    'Parum',
+    'Mountain Village',
+    'Ignitia',
+    "Khan's Jungle",
+    'Hidden Village',
+    "Hilda's Domain",
+    'Phantom Citadel',
+    'Solus Desert',
+    'Frozen Tundra',
+    'Nexolord Tower',
+    'Royalle City',
+    'Palmaya Beach',
+    'The Netherworld'
 ];
 
 let selectedMapRegion = '';
@@ -251,28 +252,14 @@ let mapRarityFilter = '';
 let mapInitialized = false;
 
 function initMapData() {
-    nexomonDatabase.forEach((nexo, idx) => {
-        if (nexo.regions && nexo.habitat) return;
-
-        let candidates = MAP_REGIONS.filter(r =>
-            r.elements.includes(nexo.element) && r.rarities.includes(nexo.rarity)
-        );
-        if (candidates.length === 0) {
-            candidates = MAP_REGIONS.filter(r => r.elements.includes(nexo.element));
+    nexomonDatabase.forEach((nexo) => {
+        if (!Array.isArray(nexo.regions)) nexo.regions = [];
+        if (!nexo.locationsByRegion || typeof nexo.locationsByRegion !== 'object') {
+            nexo.locationsByRegion = {};
         }
-        if (candidates.length === 0) {
-            candidates = MAP_REGIONS;
-        }
-
-        const primary = candidates[idx % candidates.length];
-        const secondary = candidates.length > 1 ? candidates[(idx + 3) % candidates.length] : null;
-        const regions = secondary && secondary.name !== primary.name
-            ? [primary.name, secondary.name]
-            : [primary.name];
-
-        nexo.regions = regions;
-        nexo.location = primary.name;
-        nexo.habitat = primary.habitat;
+        if (!nexo.habitatType) nexo.habitatType = 'Wild';
+        if (typeof nexo.locationNote !== 'string') nexo.locationNote = '';
+        nexo.allSubAreas = [...new Set(Object.values(nexo.locationsByRegion).flat())];
     });
 }
 
@@ -287,10 +274,10 @@ function initMapFilters() {
     const mapSearchInput = document.getElementById('map-search-input');
 
     if (regionSelect) {
-        MAP_REGIONS.forEach(r => {
+        MAP_REGIONS.forEach(regionName => {
             const opt = document.createElement('option');
-            opt.value = r.name;
-            opt.textContent = r.name;
+            opt.value = regionName;
+            opt.textContent = regionName;
             regionSelect.appendChild(opt);
         });
         regionSelect.addEventListener('change', (e) => {
@@ -299,13 +286,33 @@ function initMapFilters() {
     }
 
     if (habitatSelect) {
-        const habitats = [...new Set(MAP_REGIONS.map(r => r.habitat))];
-        habitats.forEach(h => {
+        const encounterTypes = ['Wild', 'Evolution', 'Legendary Radar', 'Warden Reward', 'Roaming'];
+        const encounterGroup = document.createElement('optgroup');
+        encounterGroup.label = 'Encounter / Method';
+        encounterTypes.forEach(type => {
             const opt = document.createElement('option');
-            opt.value = h;
-            opt.textContent = h;
-            habitatSelect.appendChild(opt);
+            opt.value = type;
+            opt.textContent = type;
+            encounterGroup.appendChild(opt);
         });
+        habitatSelect.appendChild(encounterGroup);
+
+        const subAreas = [...new Set(
+            nexomonDatabase.flatMap(n => n.allSubAreas || [])
+        )].sort((a, b) => a.localeCompare(b));
+
+        if (subAreas.length > 0) {
+            const areaGroup = document.createElement('optgroup');
+            areaGroup.label = 'Sub-Locations / Areas';
+            subAreas.forEach(area => {
+                const opt = document.createElement('option');
+                opt.value = area;
+                opt.textContent = area;
+                areaGroup.appendChild(opt);
+            });
+            habitatSelect.appendChild(areaGroup);
+        }
+
         habitatSelect.addEventListener('change', (e) => {
             mapHabitatFilter = e.target.value;
             renderLocationTab();
@@ -394,14 +401,20 @@ function renderLocationTab() {
     const query = mapSearchQuery.trim().toLowerCase();
     const filtered = nexomonDatabase.filter(nexo => {
         const matchesRegion = !selectedMapRegion || (nexo.regions && nexo.regions.includes(selectedMapRegion));
-        const matchesHabitat = !mapHabitatFilter || nexo.habitat === mapHabitatFilter;
+        const matchesHabitat = !mapHabitatFilter ||
+            nexo.habitatType === mapHabitatFilter ||
+            (selectedMapRegion
+                ? (nexo.locationsByRegion && Array.isArray(nexo.locationsByRegion[selectedMapRegion]) && nexo.locationsByRegion[selectedMapRegion].includes(mapHabitatFilter))
+                : (nexo.allSubAreas && nexo.allSubAreas.includes(mapHabitatFilter)));
         const matchesType = !mapTypeFilter || nexo.element === mapTypeFilter;
         const matchesRarity = !mapRarityFilter || nexo.rarity === mapRarityFilter;
         const matchesSearch = !query ||
             nexo.name.toLowerCase().includes(query) ||
             nexo.id.includes(query) ||
-            (nexo.habitat && nexo.habitat.toLowerCase().includes(query)) ||
-            (nexo.regions && nexo.regions.some(r => r.toLowerCase().includes(query)));
+            (nexo.locationNote && nexo.locationNote.toLowerCase().includes(query)) ||
+            (nexo.habitatType && nexo.habitatType.toLowerCase().includes(query)) ||
+            (nexo.regions && nexo.regions.some(r => r.toLowerCase().includes(query))) ||
+            (nexo.allSubAreas && nexo.allSubAreas.some(a => a.toLowerCase().includes(query)));
 
         return matchesRegion && matchesHabitat && matchesType && matchesRarity && matchesSearch;
     });
@@ -415,7 +428,7 @@ function renderLocationTab() {
 
     if (filtered.length === 0) {
         speciesGrid.innerHTML = `
-            <div class="col-span-2 text-center py-8 px-3 text-slate-400 text-xs">
+            <div class="col-span-full text-center py-8 px-3 text-slate-400 text-xs">
                 No Nexomon match the selected map filters.
             </div>
         `;
@@ -432,6 +445,27 @@ function renderLocationTab() {
         }`;
         card.onclick = () => toggleCaught(nexo.id);
 
+        let locationText = '';
+        let locationTooltip = '';
+        if (selectedMapRegion) {
+            const subLocs = (nexo.locationsByRegion && nexo.locationsByRegion[selectedMapRegion]) || [];
+            locationText = subLocs.length > 0 ? subLocs.join(', ') : (nexo.locationNote || nexo.habitatType || '');
+            locationTooltip = `${selectedMapRegion}: ${locationText}`;
+        } else {
+            locationText = (nexo.regions && nexo.regions.length > 0)
+                ? nexo.regions.join(', ')
+                : (nexo.locationNote || nexo.habitatType || '');
+            if (nexo.regions && nexo.regions.length > 0) {
+                locationTooltip = nexo.regions.map(region => {
+                    const subLocs = (nexo.locationsByRegion && nexo.locationsByRegion[region]) || [];
+                    return subLocs.length > 0 ? `${region}: ${subLocs.join(', ')}` : region;
+                }).join('\n');
+            } else {
+                locationTooltip = nexo.locationNote || nexo.habitatType || '';
+            }
+        }
+        card.title = locationTooltip;
+
         card.innerHTML = `
             <div class="w-full flex justify-between items-center text-[10px] text-slate-400 mb-1">
                 <span class="font-mono">#${nexo.id}</span>
@@ -444,7 +478,7 @@ function renderLocationTab() {
             </div>
             <div class="text-center w-full mt-1">
                 <p class="font-bold text-xs text-slate-200 truncate">${nexo.name}</p>
-                <p class="text-[10px] text-slate-400 truncate mb-1">${nexo.habitat || ''}</p>
+                <p class="location-subtext text-[10px] text-slate-400 truncate mb-1"></p>
                 <div class="flex flex-nowrap items-center justify-center gap-1 w-full">
                     <span class="text-[9px] px-1 py-0.5 rounded border inline-flex items-center justify-center gap-0.5 whitespace-nowrap leading-tight ${elemConfig.bgStyle} ${elemConfig.textColor}">
                         <img src="${elemConfig.iconPath}" alt="${nexo.element}" class="w-2.5 h-2.5 object-contain shrink-0" onerror="this.style.display='none';">
@@ -454,6 +488,9 @@ function renderLocationTab() {
                 </div>
             </div>
         `;
+        const subtextEl = card.querySelector('.location-subtext');
+        if (subtextEl) subtextEl.textContent = locationText;
+
         speciesGrid.appendChild(card);
     });
 }
