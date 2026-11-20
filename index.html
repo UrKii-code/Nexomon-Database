@@ -180,157 +180,179 @@
         </div>
 
         <!-- Tab 2: Map View -->
-        <div id="tab-location" class="hidden h-[calc(100vh-80px)] flex flex-col justify-between p-3 overflow-hidden select-none">
-    
-            <!-- Main Horizontal Row: Left Area, Center Map, Right Nexomon -->
-            <div class="grid grid-cols-12 gap-3 max-w-[1600px] mx-auto w-full flex-1 min-h-0">
-        
-            <!-- Left Side: Area List -->
-            <div class="col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-full min-h-0">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2 mb-3 shrink-0">Regions & Areas</h4>
-                <div id="region-list-container" class="space-y-2 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-                    <button onclick="selectArea('Parum')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Parum</span></button>
-                    <button onclick="selectArea('Mountain Village')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Mountain Village</span></button>
-                    <button onclick="selectArea('Ignitia')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/60 text-slate-200 hover:bg-slate-800 transition flex justify-between items-center"><span>Ignitia</span></button>
-                    <button onclick="selectArea('Khan\'s Jungle')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Khan's Jungle</span></button>
-                    <button onclick="selectArea('Hidden Village')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Hidden Village</span></button>
-                    <button onclick="selectArea('Hilda\'s Domain')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Hilda's Domain</span></button>
-                    <button onclick="selectArea('Phantom Citadel')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Phantom Citadel</span></button>
-                    <button onclick="selectArea('Solus Desert')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Solus Desert</span></button>
-                    <button onclick="selectArea('Frozen Tundra')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Frozen Tundra</span></button>
-                    <button onclick="selectArea('Nexolord Tower')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Nexolord Tower</span></button>
-                    <button onclick="selectArea('Royalle City')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Royalle City</span></button>
-                    <button onclick="selectArea('Palmaya Beach')" class="region-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center"><span>Palmaya Beach</span></button>
-                </div>
-            </div>
+        <div id="tab-location" class="hidden min-h-[calc(100vh-73px)] flex flex-col gap-3 p-3 sm:p-4 select-none max-w-[1600px] mx-auto w-full">
 
-            <!-- Center: World Map with Absolute Pins (6 Columns) -->
-            <div class="col-span-6 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center h-full relative">
-                <div class="text-center mb-2">
+            <!-- Top Section: World Map & Regional Habitats (Full Width) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center relative shrink-0">
+                <div class="text-center mb-2 shrink-0">
                     <h3 id="text-map-title" class="text-sm font-bold text-amber-400">World Map & Regional Habitats</h3>
                     <p id="text-map-subtitle" class="text-[11px] text-slate-400">Select a region to view native Nexomon species and encounter locations.</p>
                 </div>
-    
-                <!-- Expanded Map Relative Container -->
-                <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden rounded-lg border border-slate-800/80 shadow-2xl my-1 bg-slate-950/50">
-                    <img src="images/worldmap1.png" alt="Nexomon World Map" class="w-full h-full max-h-[600px] object-contain select-none">
 
-                    <!-- All Interactive Map Pins -->
-                    <button onclick="selectArea('Parum')" class="absolute top-[63%] left-[14%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="1. Parum">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                <!-- Expanded Map Container -->
+                <div class="w-full flex items-center justify-center overflow-hidden rounded-lg border border-slate-800/80 shadow-2xl bg-slate-950/60 p-2">
+                    <!-- Inner Wrapper matches exact rendered image bounds so pins never drift -->
+                    <div id="map-canvas" class="relative inline-block max-w-full">
+                        <img src="images/worldmap1.png" alt="Nexomon World Map" class="block max-w-full max-h-[42vh] sm:max-h-[48vh] w-auto h-auto rounded select-none">
 
-                    <button onclick="selectArea('Mountain Village')" class="absolute top-[39%] left-[18%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="2. Mountain Village">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <!-- All Interactive Map Pins -->
+                        <button onclick="selectArea('Parum')" data-region="Parum" class="map-pin absolute top-[65%] left-[16%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="1. Parum">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Parum Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Parum</span>
+                        </button>
 
-                    <button onclick="selectArea('Ignitia')" class="absolute top-[47%] left-[32%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="3. Ignitia">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Mountain Village')" data-region="Mountain Village" class="map-pin absolute top-[40%] left-[21%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="2. Mountain Village">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Mountain Village Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Mountain Village</span>
+                        </button>
 
-                    <button onclick="selectArea('Khan\'s Jungle')" class="absolute top-[84%] left-[26%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="4. Khan's Jungle">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Ignitia')" data-region="Ignitia" class="map-pin absolute top-[45%] left-[36%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="3. Ignitia">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Ignitia Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Ignitia</span>
+                        </button>
 
-                    <button onclick="selectArea('Hidden Village')" class="absolute top-[79%] left-[35%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="5. Hidden Village">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Khan\'s Jungle')" data-region="Khan's Jungle" class="map-pin absolute top-[84%] left-[31%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="4. Khan's Jungle">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Khan's Jungle Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Khan's Jungle</span>
+                        </button>
 
-                    <button onclick="selectArea('Hilda\'s Domain')" class="absolute top-[52%] left-[51%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="6. Hilda's Domain">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Hidden Village')" data-region="Hidden Village" class="map-pin absolute top-[72%] left-[38%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="5. Hidden Village">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Hidden Village Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Hidden Village</span>
+                        </button>
 
-                    <button onclick="selectArea('Phantom Citadel')" class="absolute top-[70%] left-[57%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="7. Phantom Citadel">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Hilda\'s Domain')" data-region="Hilda's Domain" class="map-pin absolute top-[51%] left-[47%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="6. Hilda's Domain">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Hilda's Domain Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Hilda's Domain</span>
+                        </button>
 
-                    <button onclick="selectArea('Solus Desert')" class="absolute top-[52%] left-[70%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="8. Solus Desert">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Phantom Citadel')" data-region="Phantom Citadel" class="map-pin absolute top-[72%] left-[52%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="7. Phantom Citadel">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Phantom Citadel Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Phantom Citadel</span>
+                        </button>
 
-                    <button onclick="selectArea('Frozen Tundra')" class="absolute top-[75%] left-[90%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="9. Frozen Tundra">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Solus Desert')" data-region="Solus Desert" class="map-pin absolute top-[46%] left-[75%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="8. Solus Desert">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Solus Desert Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Solus Desert</span>
+                        </button>
 
-                    <button onclick="selectArea('Nexolord Tower')" class="absolute top-[48%] left-[90%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="10. Nexolord Tower">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Frozen Tundra')" data-region="Frozen Tundra" class="map-pin absolute top-[74%] left-[93%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="9. Frozen Tundra">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Frozen Tundra Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Frozen Tundra</span>
+                        </button>
 
-                    <button onclick="selectArea('Royalle City')" class="absolute top-[22%] left-[70%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="11. Royalle City">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Nexolord Tower')" data-region="Nexolord Tower" class="map-pin absolute top-[40%] left-[92%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="10. Nexolord Tower">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Nexolord Tower Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Nexolord Tower</span>
+                        </button>
 
-                    <button onclick="selectArea('Palmaya Beach')" class="absolute top-[23%] left-[53%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition transform hover:scale-125 focus:outline-none" title="12. Palmaya Beach">
-                        <div class="relative w-10 h-10 flex items-center justify-center drop-shadow-lg">
-                            <img src="images/savepoint.png" alt="Pin Icon" class="w-full h-full object-contain select-none">
-                        </div>
-                    </button>
+                        <button onclick="selectArea('Royalle City')" data-region="Royalle City" class="map-pin absolute top-[20%] left-[71%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="11. Royalle City">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Royalle City Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Royalle City</span>
+                        </button>
+
+                        <button onclick="selectArea('Palmaya Beach')" data-region="Palmaya Beach" class="map-pin absolute top-[19%] left-[51%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="12. Palmaya Beach">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Palmaya Beach Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Palmaya Beach</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Side: Nexomon Species List (3 Columns) - Make scrollable -->
-            <div class="col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-full min-h-0">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3 shrink-0">
-                    <h4 id="selected-region-title" class="text-xs font-bold text-amber-400 uppercase tracking-wider">Nexomon</h4>
-                    <span id="region-species-count" class="text-[10px] text-slate-400 font-medium">12 Species</span>
-                </div>
-                <div id="region-species-grid" class="grid grid-cols-2 gap-2 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-                <!-- Dynamically populated species cards go here -->
-                </div>
-            </div>
-        </div>
+            <!-- Bottom Section: Separate Regions & Areas (Left) and Species (Right) Side by Side -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 w-full flex-1 min-h-0">
 
-        <!-- Bottom Filter Footer (Fixed layout span) -->
-        <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 max-w-[1600px] mx-auto w-full shadow-lg mt-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <!-- Search Bar -->
-                <div class="flex-1 min-w-[200px]">
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">🔍</span>
-                        <input type="text" id="map-search-input" placeholder="Search habitat or species..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                <!-- Left Side: Regions & Areas -->
+                <div class="md:col-span-4 lg:col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-[360px] md:h-[440px] min-h-0">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3 shrink-0">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Regions & Areas</h4>
+                        <button onclick="selectArea('')" class="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition">All Regions</button>
+                    </div>
+                    <div id="region-list-container" class="space-y-1.5 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                        <button onclick="selectArea('Parum')" data-region="Parum" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Parum</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Mountain Village')" data-region="Mountain Village" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Mountain Village</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Ignitia')" data-region="Ignitia" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Ignitia</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Khan\'s Jungle')" data-region="Khan's Jungle" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Khan's Jungle</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Hidden Village')" data-region="Hidden Village" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Hidden Village</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Hilda\'s Domain')" data-region="Hilda's Domain" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Hilda's Domain</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Phantom Citadel')" data-region="Phantom Citadel" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Phantom Citadel</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Solus Desert')" data-region="Solus Desert" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Solus Desert</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Frozen Tundra')" data-region="Frozen Tundra" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Frozen Tundra</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Nexolord Tower')" data-region="Nexolord Tower" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Nexolord Tower</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Royalle City')" data-region="Royalle City" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Royalle City</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
+                        <button onclick="selectArea('Palmaya Beach')" data-region="Palmaya Beach" class="region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2"><span>Palmaya Beach</span><span class="region-progress text-[10px] text-slate-400 font-mono ml-auto"></span></button>
                     </div>
                 </div>
 
-                <!-- Filter Dropdowns -->
-                <div class="flex flex-wrap gap-2">
-                    <select id="filter-region-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
-                        <option value="">Region ▼</option>
-                    </select>
-                    <select id="filter-habitat-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
-                        <option value="">Habitat ▼</option>
-                    </select>
-                    <select id="filter-type-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
-                        <option value="">Type ▼</option>
-                    </select>
-                    <select id="filter-rarity-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
-                        <option value="">Rarity ▼</option>
-                    </select>
+                <!-- Right Side: Species List -->
+                <div class="md:col-span-8 lg:col-span-9 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col h-[420px] md:h-[440px] min-h-0">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3 shrink-0 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <img id="selected-region-icon" src="images/savepoint.png" alt="Region" class="w-4 h-4 object-contain hidden shrink-0">
+                            <h4 id="selected-region-title" class="text-xs font-bold text-amber-400 uppercase tracking-wider truncate">All Regions</h4>
+                        </div>
+                        <span id="region-species-count" class="text-[10px] text-slate-400 font-medium whitespace-nowrap">0 Species</span>
+                    </div>
+                    <div id="region-species-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 overflow-y-auto pr-1 flex-1 custom-scrollbar content-start">
+                    <!-- Dynamically populated species cards go here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Filter Footer -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 w-full shadow-lg shrink-0">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <!-- Search Bar -->
+                    <div class="flex-1 min-w-[200px]">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">🔍</span>
+                            <input type="text" id="map-search-input" placeholder="Search habitat or species..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <!-- Filter Dropdowns -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="filter-region-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                            <option value="">All Regions</option>
+                        </select>
+                        <select id="filter-habitat-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                            <option value="">All Habitats</option>
+                        </select>
+                        <select id="filter-type-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                            <option value="">All Types</option>
+                        </select>
+                        <select id="filter-rarity-dropdown" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500">
+                            <option value="">All Rarities</option>
+                        </select>
+                        <button onclick="resetMapFilters()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg px-3 py-1.5 border border-slate-700 transition">Clear</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
         <!-- Tab 3: Profile View -->
         <div id="tab-profile" class="hidden max-w-2xl mx-auto px-6 py-8 space-y-6">

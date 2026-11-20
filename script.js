@@ -31,6 +31,7 @@ if (firebaseConfig && firebaseConfig.apiKey && typeof firebase !== 'undefined') 
             loadSavedData();
         }
         renderGrid();
+        renderLocationTab();
     });
 }
 
@@ -88,6 +89,7 @@ function toggleCaught(id) {
         }
         
         renderGrid();
+        renderLocationTab();
     }
 }
 
@@ -226,100 +228,308 @@ function switchTab(tabName) {
     }
 }
 
-// Location / Map Tab Dynamic Rendering
-function renderLocationTab() {
-    const regionGrid = document.getElementById('region-content-grid');
-    if (!regionGrid) return;
-    
-    regionGrid.innerHTML = '';
-    
-    // Group Nexomon by region/location property (falls back to "Unknown Region" if missing)
-    const locations = {};
-    nexomonDatabase.forEach(nexo => {
-        const loc = nexo.location || nexo.region || "Unknown Region";
-        if (!locations[loc]) locations[loc] = [];
-        locations[loc].push(nexo);
+const MAP_REGIONS = [
+    { name: 'Parum', habitat: 'Grass', elements: ['Normal', 'Plant', 'Wind', 'Electric', 'Water', 'Fire'], rarities: ['Common', 'Uncommon', 'Rare'] },
+    { name: 'Mountain Village', habitat: 'Cave', elements: ['Mineral', 'Wind', 'Normal', 'Fire'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare'] },
+    { name: 'Ignitia', habitat: 'Volcano', elements: ['Fire', 'Mineral', 'Electric'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
+    { name: "Khan's Jungle", habitat: 'Jungle', elements: ['Plant', 'Wind', 'Water', 'Normal'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare'] },
+    { name: 'Hidden Village', habitat: 'Forest', elements: ['Plant', 'Electric', 'Wind', 'Normal'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
+    { name: "Hilda's Domain", habitat: 'Manor', elements: ['Normal', 'Electric', 'Wind', 'Plant'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special'] },
+    { name: 'Phantom Citadel', habitat: 'Ruins', elements: ['Mineral', 'Electric', 'Fire', 'Wind', 'Normal'], rarities: ['Rare', 'Mega Rare', 'Special', 'Legendary'] },
+    { name: 'Solus Desert', habitat: 'Desert', elements: ['Mineral', 'Fire', 'Normal', 'Electric'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Legendary'] },
+    { name: 'Frozen Tundra', habitat: 'Snow', elements: ['Water', 'Wind', 'Mineral'], rarities: ['Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'] },
+    { name: 'Nexolord Tower', habitat: 'Tower', elements: ['Electric', 'Fire', 'Mineral', 'Wind', 'Water', 'Plant', 'Normal'], rarities: ['Rare', 'Mega Rare', 'Special', 'Legendary'] },
+    { name: 'Royalle City', habitat: 'Urban', elements: ['Normal', 'Electric', 'Water', 'Wind'], rarities: ['Common', 'Uncommon', 'Rare', 'Special'] },
+    { name: 'Palmaya Beach', habitat: 'Beach', elements: ['Water', 'Wind', 'Plant', 'Normal'], rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Legendary'] }
+];
+
+let selectedMapRegion = '';
+let mapSearchQuery = '';
+let mapHabitatFilter = '';
+let mapTypeFilter = '';
+let mapRarityFilter = '';
+let mapInitialized = false;
+
+function initMapData() {
+    nexomonDatabase.forEach((nexo, idx) => {
+        if (nexo.regions && nexo.habitat) return;
+
+        let candidates = MAP_REGIONS.filter(r =>
+            r.elements.includes(nexo.element) && r.rarities.includes(nexo.rarity)
+        );
+        if (candidates.length === 0) {
+            candidates = MAP_REGIONS.filter(r => r.elements.includes(nexo.element));
+        }
+        if (candidates.length === 0) {
+            candidates = MAP_REGIONS;
+        }
+
+        const primary = candidates[idx % candidates.length];
+        const secondary = candidates.length > 1 ? candidates[(idx + 3) % candidates.length] : null;
+        const regions = secondary && secondary.name !== primary.name
+            ? [primary.name, secondary.name]
+            : [primary.name];
+
+        nexo.regions = regions;
+        nexo.location = primary.name;
+        nexo.habitat = primary.habitat;
     });
+}
 
-    for (const [regionName, nexos] of Object.entries(locations)) {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900/80 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg';
-        
-        let nexomonListHTML = nexos.map(n => `
-            <div class="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-slate-800/90 text-slate-200 border border-slate-700">
-                <span class="text-slate-400 font-mono">#${n.id}</span>
-                <span class="font-bold truncate">${n.name}</span>
-                <span class="ml-auto w-2 h-2 rounded-full ${n.caught ? 'bg-emerald-500' : 'bg-slate-600'}"></span>
-            </div>
-        `).join('');
+function initMapFilters() {
+    if (mapInitialized) return;
+    mapInitialized = true;
 
-        card.innerHTML = `
-            <h4 class="text-sm font-bold text-amber-400 flex items-center justify-between border-b border-slate-800 pb-2">
-                <span>📍 ${regionName}</span>
-                <span class="text-xs font-mono text-slate-400">${nexos.length} Species</span>
-            </h4>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 max-h-60 overflow-y-auto pr-1">
-                ${nexomonListHTML}
-            </div>
-        `;
-        regionGrid.appendChild(card);
+    const regionSelect = document.getElementById('filter-region-dropdown');
+    const habitatSelect = document.getElementById('filter-habitat-dropdown');
+    const typeSelect = document.getElementById('filter-type-dropdown');
+    const raritySelect = document.getElementById('filter-rarity-dropdown');
+    const mapSearchInput = document.getElementById('map-search-input');
+
+    if (regionSelect) {
+        MAP_REGIONS.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.name;
+            opt.textContent = r.name;
+            regionSelect.appendChild(opt);
+        });
+        regionSelect.addEventListener('change', (e) => {
+            selectArea(e.target.value);
+        });
+    }
+
+    if (habitatSelect) {
+        const habitats = [...new Set(MAP_REGIONS.map(r => r.habitat))];
+        habitats.forEach(h => {
+            const opt = document.createElement('option');
+            opt.value = h;
+            opt.textContent = h;
+            habitatSelect.appendChild(opt);
+        });
+        habitatSelect.addEventListener('change', (e) => {
+            mapHabitatFilter = e.target.value;
+            renderLocationTab();
+        });
+    }
+
+    if (typeSelect) {
+        const types = [...new Set(nexomonDatabase.map(n => n.element))];
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            typeSelect.appendChild(opt);
+        });
+        typeSelect.addEventListener('change', (e) => {
+            mapTypeFilter = e.target.value;
+            renderLocationTab();
+        });
+    }
+
+    if (raritySelect) {
+        const rarities = ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'];
+        rarities.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r;
+            raritySelect.appendChild(opt);
+        });
+        raritySelect.addEventListener('change', (e) => {
+            mapRarityFilter = e.target.value;
+            renderLocationTab();
+        });
+    }
+
+    if (mapSearchInput) {
+        mapSearchInput.addEventListener('input', (e) => {
+            mapSearchQuery = e.target.value;
+            renderLocationTab();
+        });
     }
 }
 
-function selectRegion(regionName) {
-    console.log("Selected region:", regionName);
-    
-    // Target the region content grid
-    const grid = document.getElementById('region-content-grid');
-    grid.innerHTML = `
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 col-span-full">
-            <h4 class="text-sm font-bold text-amber-400 mb-2">Habitat Data: ${regionName}</h4>
-            <p class="text-xs text-slate-400">Loading native Nexomon species and encounter rates for this area...</p>
-        </div>
-    `;
-    
-    // Add your filtering or rendering logic here to display database entries belonging to this region
+function resetMapFilters() {
+    selectedMapRegion = '';
+    mapSearchQuery = '';
+    mapHabitatFilter = '';
+    mapTypeFilter = '';
+    mapRarityFilter = '';
+
+    const mapSearchInput = document.getElementById('map-search-input');
+    const regionSelect = document.getElementById('filter-region-dropdown');
+    const habitatSelect = document.getElementById('filter-habitat-dropdown');
+    const typeSelect = document.getElementById('filter-type-dropdown');
+    const raritySelect = document.getElementById('filter-rarity-dropdown');
+
+    if (mapSearchInput) mapSearchInput.value = '';
+    if (regionSelect) regionSelect.value = '';
+    if (habitatSelect) habitatSelect.value = '';
+    if (typeSelect) typeSelect.value = '';
+    if (raritySelect) raritySelect.value = '';
+
+    selectArea('');
+}
+
+// Location / Map Tab Dynamic Rendering
+function renderLocationTab() {
+    initMapData();
+    initMapFilters();
+
+    const speciesGrid = document.getElementById('region-species-grid');
+    const countEl = document.getElementById('region-species-count');
+    if (!speciesGrid) return;
+
+    // Update left region progress counters
+    const regionButtons = document.querySelectorAll('#region-list-container .region-btn');
+    regionButtons.forEach(button => {
+        const regionName = button.getAttribute('data-region');
+        const progressSpan = button.querySelector('.region-progress');
+        if (regionName && progressSpan) {
+            const regionSpecies = nexomonDatabase.filter(n => n.regions && n.regions.includes(regionName));
+            const caughtInRegion = regionSpecies.filter(n => n.caught).length;
+            progressSpan.textContent = `${caughtInRegion}/${regionSpecies.length}`;
+        }
+    });
+
+    const query = mapSearchQuery.trim().toLowerCase();
+    const filtered = nexomonDatabase.filter(nexo => {
+        const matchesRegion = !selectedMapRegion || (nexo.regions && nexo.regions.includes(selectedMapRegion));
+        const matchesHabitat = !mapHabitatFilter || nexo.habitat === mapHabitatFilter;
+        const matchesType = !mapTypeFilter || nexo.element === mapTypeFilter;
+        const matchesRarity = !mapRarityFilter || nexo.rarity === mapRarityFilter;
+        const matchesSearch = !query ||
+            nexo.name.toLowerCase().includes(query) ||
+            nexo.id.includes(query) ||
+            (nexo.habitat && nexo.habitat.toLowerCase().includes(query)) ||
+            (nexo.regions && nexo.regions.some(r => r.toLowerCase().includes(query)));
+
+        return matchesRegion && matchesHabitat && matchesType && matchesRarity && matchesSearch;
+    });
+
+    const caughtCount = filtered.filter(n => n.caught).length;
+    if (countEl) {
+        countEl.textContent = `${filtered.length} Species • ${caughtCount} Caught`;
+    }
+
+    speciesGrid.innerHTML = '';
+
+    if (filtered.length === 0) {
+        speciesGrid.innerHTML = `
+            <div class="col-span-2 text-center py-8 px-3 text-slate-400 text-xs">
+                No Nexomon match the selected map filters.
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(nexo => {
+        const elemConfig = getElementConfig(nexo.element, nexo.elementIcon);
+        const card = document.createElement('div');
+        card.className = `rounded-xl p-2.5 flex flex-col items-center justify-between border transition-all cursor-pointer ${
+            nexo.caught
+                ? 'bg-slate-800/90 border-emerald-500/50 shadow-md shadow-emerald-950/20'
+                : 'bg-slate-950/60 border-slate-800 opacity-75 hover:opacity-100 hover:border-slate-700'
+        }`;
+        card.onclick = () => toggleCaught(nexo.id);
+
+        card.innerHTML = `
+            <div class="w-full flex justify-between items-center text-[10px] text-slate-400 mb-1">
+                <span class="font-mono">#${nexo.id}</span>
+                <span class="w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] ${nexo.caught ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-bold' : 'border-slate-600'}">
+                    ${nexo.caught ? '✓' : ''}
+                </span>
+            </div>
+            <div class="w-16 h-16 my-1 flex items-center justify-center relative">
+                <img src="${nexo.image}" alt="${nexo.name}" loading="lazy" class="w-full h-full object-contain drop-shadow" onerror="this.style.display='none';">
+            </div>
+            <div class="text-center w-full mt-1">
+                <p class="font-bold text-xs text-slate-200 truncate">${nexo.name}</p>
+                <p class="text-[10px] text-slate-400 truncate mb-1">${nexo.habitat || ''}</p>
+                <div class="flex flex-nowrap items-center justify-center gap-1 w-full">
+                    <span class="text-[9px] px-1 py-0.5 rounded border inline-flex items-center justify-center gap-0.5 whitespace-nowrap leading-tight ${elemConfig.bgStyle} ${elemConfig.textColor}">
+                        <img src="${elemConfig.iconPath}" alt="${nexo.element}" class="w-2.5 h-2.5 object-contain shrink-0" onerror="this.style.display='none';">
+                        <span>${nexo.element}</span>
+                    </span>
+                    <span class="text-[9px] px-1 py-0.5 rounded border inline-flex items-center justify-center whitespace-nowrap leading-tight ${getRarityBadgeStyle(nexo.rarity)}">${nexo.rarity}</span>
+                </div>
+            </div>
+        `;
+        speciesGrid.appendChild(card);
+    });
 }
 
 function selectArea(areaName) {
-    // 1. Update right panel header title and show owl icon
+    selectedMapRegion = areaName || '';
+
+    // 1. Update right panel header title and icon
     const regionTitle = document.getElementById('selected-region-title');
     if (regionTitle) {
-        regionTitle.textContent = `${areaName} Habitat`;
+        regionTitle.textContent = selectedMapRegion ? `${selectedMapRegion} Habitat` : 'All Regions';
     }
 
     const regionIcon = document.getElementById('selected-region-icon');
     if (regionIcon) {
         regionIcon.src = "images/savepoint.png";
-        regionIcon.classList.remove('hidden');
+        if (selectedMapRegion) {
+            regionIcon.classList.remove('hidden');
+        } else {
+            regionIcon.classList.add('hidden');
+        }
     }
 
-    // 2. Loop through all region buttons to reset them and set active state properly
+    // 2. Sync region dropdown
+    const regionSelect = document.getElementById('filter-region-dropdown');
+    if (regionSelect) {
+        regionSelect.value = selectedMapRegion;
+    }
+
+    // 3. Highlight active button in left region list
     const regionButtons = document.querySelectorAll('#region-list-container .region-btn');
     regionButtons.forEach(button => {
-        const spanText = button.querySelector('span').textContent;
-        
-        // Remove any existing owl icon inside the button to prevent stacking duplicates
+        const regionKey = button.getAttribute('data-region') || button.querySelector('span').textContent;
+
         const existingIcon = button.querySelector('.region-owl-icon');
         if (existingIcon) existingIcon.remove();
 
-        if (spanText === areaName) {
-            // Active button styles + append owl image to the right
+        if (selectedMapRegion && regionKey === selectedMapRegion) {
             button.classList.remove('bg-slate-800/40', 'bg-slate-800/60', 'text-slate-300', 'text-slate-200');
             button.classList.add('bg-slate-800', 'border', 'border-amber-500/50', 'text-white');
 
             const img = document.createElement('img');
             img.src = "images/savepoint.png";
-            img.className = "w-4 h-4 object-contain region-owl-icon select-none";
-            button.appendChild(img);
+            img.className = "w-4 h-4 object-contain region-owl-icon select-none shrink-0";
+            button.insertBefore(img, button.querySelector('.region-progress'));
         } else {
-            // Reset to normal unselected button styles
             button.classList.remove('bg-slate-800', 'border', 'border-amber-500/50', 'text-white');
             button.classList.add('bg-slate-800/40', 'text-slate-300');
         }
     });
 
-    // Load your species data for this area...
+    // 4. Highlight active pin on the map
+    const mapPins = document.querySelectorAll('#map-canvas .map-pin');
+    mapPins.forEach(pin => {
+        const pinRegion = pin.getAttribute('data-region');
+        const pinCircle = pin.firstElementChild;
+        const pinLabel = pin.querySelector('.pin-label');
+
+        if (selectedMapRegion && pinRegion === selectedMapRegion) {
+            pin.classList.add('scale-125', 'z-20');
+            if (pinCircle) pinCircle.classList.add('ring-2', 'ring-amber-400', 'bg-amber-400/20');
+            if (pinLabel) {
+                pinLabel.classList.remove('hidden');
+                pinLabel.classList.add('block');
+            }
+        } else {
+            pin.classList.remove('scale-125', 'z-20');
+            if (pinCircle) pinCircle.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-400/20');
+            if (pinLabel) {
+                pinLabel.classList.add('hidden');
+                pinLabel.classList.remove('block');
+            }
+        }
+    });
+
+    renderLocationTab();
 }
 
 function getRarityBadgeStyle(rarity) {
@@ -707,8 +917,12 @@ function toggleSelectAll(rarity) {
     localStorage.setItem('nexomon_collection_data', JSON.stringify(caughtIds));
 
     renderGrid();
+    renderLocationTab();
 }
 
 // Initialize saved data before first render
 loadSavedData();
+initMapData();
+initMapFilters();
 renderGrid();
+renderLocationTab();
