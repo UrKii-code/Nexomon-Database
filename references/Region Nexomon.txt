@@ -1,0 +1,13 @@
+Region Nexomon
+1  Parum
+2  Mountain Village
+3  Ignitia
+4  Khan's Jungle
+5  Hidden Village
+6  Hilda's Domain
+7  Phantom Citadel
+8  Solus Desert
+9  Frozen Tundra
+10 Nexolord Tower
+11 Royalle City
+12 Palmaya Beach
