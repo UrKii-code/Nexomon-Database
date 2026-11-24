@@ -75,17 +75,86 @@ function handleFirebaseLogout() {
     });
 }
 
+const GAME_CONFIG = {
+    nexomon1: {
+        id: 'nexomon1',
+        title: 'COLLECTION DATABASE',
+        rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'],
+        mapImage: '/src/assets/images/nexomon_worldmap_hd_1795166264111.jpg',
+        mapAlt: 'Nexomon World Map',
+        regions: [
+            'Parum',
+            'Mountain Village',
+            'Ignitia',
+            "Khan's Jungle",
+            'Hidden Village',
+            "Hilda's Domain",
+            'Phantom Citadel',
+            'Solus Desert',
+            'Frozen Tundra',
+            'Nexolord Tower',
+            'Royalle City',
+            'Palmaya Beach',
+            'The Netherworld'
+        ],
+        encounterTypes: ['Wild', 'Evolution', 'Legendary Radar', 'Warden Reward', 'Roaming'],
+        storageKey: 'nexomon_collection_data',
+        cloudField: 'caughtNexomon'
+    },
+    extinction: {
+        id: 'extinction',
+        title: 'EXTINCTION COLLECTION DATABASE',
+        rarities: ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Ultra Rare', 'Legendary', 'Ultimate'],
+        mapImage: 'images/worldmap-extinction.jpg',
+        mapAlt: 'Nexomon: Extinction World Map',
+        regions: [
+            'Parum City',
+            'The Orphanage',
+            'The Outlands',
+            'Immortal Citadel',
+            'Frozen Lake',
+            'New Ignitia',
+            'Lateria',
+            'Frozen Tundra',
+            'Cadium',
+            'The Drake Isles',
+            'Hidden Village',
+            'Palmaya',
+            'Precursor Mountain'
+        ],
+        encounterTypes: ['Wild', 'Evolution', 'Quest / Post-Game', 'Quest / Resurrection', 'Post-Game', 'Roaming'],
+        storageKey: 'nexomon_extinction_collection_data',
+        cloudField: 'caughtExtinction'
+    }
+};
+
+let currentGame = localStorage.getItem('nexomon_active_game') || 'nexomon1';
+if (!GAME_CONFIG[currentGame]) currentGame = 'nexomon1';
+
+function getGameConfig() {
+    return GAME_CONFIG[currentGame] || GAME_CONFIG.nexomon1;
+}
+
+function getActiveDatabase() {
+    if (currentGame === 'extinction' && typeof extinctionDatabase !== 'undefined') {
+        return extinctionDatabase;
+    }
+    return nexomonDatabase;
+}
+
 // Ensure toggleCaught saves to cloud if logged in
 function toggleCaught(id) {
-    const nexo = nexomonDatabase.find(n => n.id === id);
+    const activeDb = getActiveDatabase();
+    const nexo = activeDb.find(n => n.id === id);
     if (nexo) {
         nexo.caught = !nexo.caught;
         
         if (currentUserId && db) {
             saveCollectionToCloud();
         } else {
-            const caughtIds = nexomonDatabase.filter(n => n.caught).map(n => n.id);
-            localStorage.setItem('nexomon_collection_data', JSON.stringify(caughtIds));
+            const cfg = getGameConfig();
+            const caughtIds = activeDb.filter(n => n.caught).map(n => n.id);
+            localStorage.setItem(cfg.storageKey, JSON.stringify(caughtIds));
         }
         
         renderGrid();
@@ -95,10 +164,12 @@ function toggleCaught(id) {
 
 async function saveCollectionToCloud() {
     if (!currentUserId || !db) return;
-    const caughtIds = nexomonDatabase.filter(n => n.caught).map(n => n.id);
+    const cfg = getGameConfig();
+    const activeDb = getActiveDatabase();
+    const caughtIds = activeDb.filter(n => n.caught).map(n => n.id);
     try {
         await db.collection("users").doc(currentUserId).set({
-            caughtNexomon: caughtIds,
+            [cfg.cloudField]: caughtIds,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
     } catch (error) {
@@ -116,6 +187,12 @@ async function loadCloudData(uid) {
             nexomonDatabase.forEach(nexo => {
                 nexo.caught = caughtIds.includes(nexo.id);
             });
+            if (typeof extinctionDatabase !== 'undefined') {
+                const caughtExtIds = data.caughtExtinction || [];
+                extinctionDatabase.forEach(nexo => {
+                    nexo.caught = caughtExtIds.includes(nexo.id);
+                });
+            }
         }
     } catch (error) {
         console.error("Error loading cloud data: ", error);
@@ -164,6 +241,18 @@ function loadSavedData() {
                 nexo.caught = true;
             }
         });
+    }
+
+    if (typeof extinctionDatabase !== 'undefined') {
+        const savedExtinction = localStorage.getItem('nexomon_extinction_collection_data');
+        if (savedExtinction) {
+            const caughtExtIds = JSON.parse(savedExtinction);
+            extinctionDatabase.forEach(nexo => {
+                if (caughtExtIds.includes(nexo.id)) {
+                    nexo.caught = true;
+                }
+            });
+        }
     }
 
     const savedTrainer = localStorage.getItem('nexomon_trainer_name');
@@ -228,68 +317,76 @@ function switchTab(tabName) {
     }
 }
 
-const MAP_REGIONS = [
-    'Parum',
-    'Mountain Village',
-    'Ignitia',
-    "Khan's Jungle",
-    'Hidden Village',
-    "Hilda's Domain",
-    'Phantom Citadel',
-    'Solus Desert',
-    'Frozen Tundra',
-    'Nexolord Tower',
-    'Royalle City',
-    'Palmaya Beach',
-    'The Netherworld'
-];
-
 let selectedMapRegion = '';
 let mapSearchQuery = '';
 let mapHabitatFilter = '';
 let mapTypeFilter = '';
 let mapRarityFilter = '';
-let mapInitialized = false;
+let mapFiltersBound = false;
 
 function initMapData() {
-    nexomonDatabase.forEach((nexo) => {
-        if (!Array.isArray(nexo.regions)) nexo.regions = [];
-        if (!nexo.locationsByRegion || typeof nexo.locationsByRegion !== 'object') {
-            nexo.locationsByRegion = {};
-        }
-        if (!nexo.habitatType) nexo.habitatType = 'Wild';
-        if (typeof nexo.locationNote !== 'string') nexo.locationNote = '';
-        nexo.allSubAreas = [...new Set(Object.values(nexo.locationsByRegion).flat())];
+    const dbs = [nexomonDatabase];
+    if (typeof extinctionDatabase !== 'undefined') dbs.push(extinctionDatabase);
+    dbs.forEach(dbList => {
+        dbList.forEach((nexo) => {
+            if (!Array.isArray(nexo.regions)) nexo.regions = [];
+            if (!nexo.locationsByRegion || typeof nexo.locationsByRegion !== 'object') {
+                nexo.locationsByRegion = {};
+            }
+            if (!nexo.habitatType) nexo.habitatType = 'Wild';
+            if (typeof nexo.locationNote !== 'string') nexo.locationNote = '';
+            nexo.allSubAreas = [...new Set(Object.values(nexo.locationsByRegion).flat())];
+        });
     });
 }
 
-function initMapFilters() {
-    if (mapInitialized) return;
-    mapInitialized = true;
+function renderRegionListButtons() {
+    const container = document.getElementById('region-list-container');
+    if (!container) return;
+    const cfg = getGameConfig();
+    container.innerHTML = '';
+    cfg.regions.forEach(regionName => {
+        const btn = document.createElement('button');
+        btn.setAttribute('data-region', regionName);
+        btn.className = 'region-btn w-full text-left px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/40 text-slate-300 hover:bg-slate-800 transition flex justify-between items-center gap-2';
+        btn.onclick = () => selectArea(regionName);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = regionName;
+        const progSpan = document.createElement('span');
+        progSpan.className = 'region-progress text-[10px] text-slate-400 font-mono ml-auto';
+
+        btn.appendChild(nameSpan);
+        btn.appendChild(progSpan);
+        container.appendChild(btn);
+    });
+}
+
+function populateMapFilterOptions() {
+    const cfg = getGameConfig();
+    const activeDb = getActiveDatabase();
 
     const regionSelect = document.getElementById('filter-region-dropdown');
     const habitatSelect = document.getElementById('filter-habitat-dropdown');
     const typeSelect = document.getElementById('filter-type-dropdown');
     const raritySelect = document.getElementById('filter-rarity-dropdown');
-    const mapSearchInput = document.getElementById('map-search-input');
 
     if (regionSelect) {
-        MAP_REGIONS.forEach(regionName => {
+        regionSelect.innerHTML = '<option value="">All Regions</option>';
+        cfg.regions.forEach(regionName => {
             const opt = document.createElement('option');
             opt.value = regionName;
             opt.textContent = regionName;
             regionSelect.appendChild(opt);
         });
-        regionSelect.addEventListener('change', (e) => {
-            selectArea(e.target.value, true);
-        });
+        regionSelect.value = selectedMapRegion;
     }
 
     if (habitatSelect) {
-        const encounterTypes = ['Wild', 'Evolution', 'Legendary Radar', 'Warden Reward', 'Roaming'];
+        habitatSelect.innerHTML = '<option value="">All Habitats</option>';
         const encounterGroup = document.createElement('optgroup');
         encounterGroup.label = 'Encounter / Method';
-        encounterTypes.forEach(type => {
+        cfg.encounterTypes.forEach(type => {
             const opt = document.createElement('option');
             opt.value = type;
             opt.textContent = type;
@@ -298,7 +395,7 @@ function initMapFilters() {
         habitatSelect.appendChild(encounterGroup);
 
         const subAreas = [...new Set(
-            nexomonDatabase.flatMap(n => n.allSubAreas || [])
+            activeDb.flatMap(n => n.allSubAreas || [])
         )].sort((a, b) => a.localeCompare(b));
 
         if (subAreas.length > 0) {
@@ -312,47 +409,75 @@ function initMapFilters() {
             });
             habitatSelect.appendChild(areaGroup);
         }
-
-        habitatSelect.addEventListener('change', (e) => {
-            mapHabitatFilter = e.target.value;
-            renderLocationTab();
-        });
+        habitatSelect.value = mapHabitatFilter;
     }
 
     if (typeSelect) {
-        const types = [...new Set(nexomonDatabase.map(n => n.element))];
+        typeSelect.innerHTML = '<option value="">All Types</option>';
+        const types = [...new Set(activeDb.map(n => n.element))];
         types.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t;
             opt.textContent = t;
             typeSelect.appendChild(opt);
         });
-        typeSelect.addEventListener('change', (e) => {
-            mapTypeFilter = e.target.value;
-            renderLocationTab();
-        });
+        typeSelect.value = mapTypeFilter;
     }
 
     if (raritySelect) {
-        const rarities = ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'];
-        rarities.forEach(r => {
+        raritySelect.innerHTML = '<option value="">All Rarities</option>';
+        cfg.rarities.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r;
             opt.textContent = r;
             raritySelect.appendChild(opt);
         });
+        raritySelect.value = mapRarityFilter;
+    }
+}
+
+function initMapFilters() {
+    if (mapFiltersBound) return;
+    mapFiltersBound = true;
+
+    const regionSelect = document.getElementById('filter-region-dropdown');
+    const habitatSelect = document.getElementById('filter-habitat-dropdown');
+    const typeSelect = document.getElementById('filter-type-dropdown');
+    const raritySelect = document.getElementById('filter-rarity-dropdown');
+    const mapSearchInput = document.getElementById('map-search-input');
+
+    if (regionSelect) {
+        regionSelect.addEventListener('change', (e) => {
+            selectArea(e.target.value, true);
+        });
+    }
+    if (habitatSelect) {
+        habitatSelect.addEventListener('change', (e) => {
+            mapHabitatFilter = e.target.value;
+            renderLocationTab();
+        });
+    }
+    if (typeSelect) {
+        typeSelect.addEventListener('change', (e) => {
+            mapTypeFilter = e.target.value;
+            renderLocationTab();
+        });
+    }
+    if (raritySelect) {
         raritySelect.addEventListener('change', (e) => {
             mapRarityFilter = e.target.value;
             renderLocationTab();
         });
     }
-
     if (mapSearchInput) {
         mapSearchInput.addEventListener('input', (e) => {
             mapSearchQuery = e.target.value;
             renderLocationTab();
         });
     }
+
+    renderRegionListButtons();
+    populateMapFilterOptions();
 }
 
 function resetMapFilters() {
@@ -382,6 +507,7 @@ function renderLocationTab() {
     initMapData();
     initMapFilters();
 
+    const activeDb = getActiveDatabase();
     const speciesGrid = document.getElementById('region-species-grid');
     const countEl = document.getElementById('region-species-count');
     if (!speciesGrid) return;
@@ -392,14 +518,14 @@ function renderLocationTab() {
         const regionName = button.getAttribute('data-region');
         const progressSpan = button.querySelector('.region-progress');
         if (regionName && progressSpan) {
-            const regionSpecies = nexomonDatabase.filter(n => n.regions && n.regions.includes(regionName));
+            const regionSpecies = activeDb.filter(n => n.regions && n.regions.includes(regionName));
             const caughtInRegion = regionSpecies.filter(n => n.caught).length;
             progressSpan.textContent = `${caughtInRegion}/${regionSpecies.length}`;
         }
     });
 
     const query = mapSearchQuery.trim().toLowerCase();
-    const filtered = nexomonDatabase.filter(nexo => {
+    const filtered = activeDb.filter(nexo => {
         const matchesRegion = !selectedMapRegion || (nexo.regions && nexo.regions.includes(selectedMapRegion));
         const matchesHabitat = !mapHabitatFilter ||
             nexo.habitatType === mapHabitatFilter ||
@@ -544,7 +670,8 @@ function selectArea(areaName, force = false) {
     });
 
     // 4. Highlight active pin on the map
-    const mapPins = document.querySelectorAll('#map-canvas .map-pin');
+    const activePinsId = currentGame === 'extinction' ? 'map-pins-extinction' : 'map-pins-nexomon1';
+    const mapPins = document.querySelectorAll(`#${activePinsId} .map-pin`);
     mapPins.forEach(pin => {
         const pinRegion = pin.getAttribute('data-region');
         const pinCircle = pin.firstElementChild;
@@ -577,7 +704,9 @@ function getRarityBadgeStyle(rarity) {
         case 'Rare': return 'bg-blue-950 text-blue-300 border-blue-800';
         case 'Mega Rare': return 'bg-purple-950 text-purple-300 border-purple-800';
         case 'Special': return 'bg-pink-950 text-pink-300 border-pink-800';
+        case 'Ultra Rare': return 'bg-pink-950 text-pink-300 border-pink-800';
         case 'Legendary': return 'bg-amber-950 text-amber-300 border-amber-600 shadow-amber-500/10 shadow-lg';
+        case 'Ultimate': return 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-cyan-500/20 shadow-lg';
         default: return 'bg-slate-800 text-slate-300 border-slate-700';
     }
 }
@@ -606,6 +735,7 @@ function getElementConfig(element, elementIcon) {
 const translations = {
     en: {
         collectionTitle: "COLLECTION DATABASE",
+        extinctionCollectionTitle: "EXTINCTION COLLECTION DATABASE",
         navCollection: "Collections",
         navMap: "Map",
         navProfile: "Profile",
@@ -635,10 +765,13 @@ const translations = {
         rarityRare: "Rare",
         rarityMegaRare: "Mega Rare",
         raritySpecial: "Special",
-        rarityLegendary: "Legendary"
+        rarityUltraRare: "Ultra Rare",
+        rarityLegendary: "Legendary",
+        rarityUltimate: "Ultimate"
     },
     ms: {
         collectionTitle: "PANGKALAN DATA KOLEKSI",
+        extinctionCollectionTitle: "PANGKALAN DATA KOLEKSI EXTINCTION",
         navCollection: "Koleksi",
         navMap: "Peta",
         navProfile: "Profil",
@@ -665,13 +798,16 @@ const translations = {
         deleteAccountBtn: "Padam Akaun",
         rarityCommon: "Biasa",
         rarityUncommon: "Luar Biasa",
-        rarityRare: "Nadir", // Or 'Nadir'
+        rarityRare: "Nadir",
         rarityMegaRare: "Sangat Nadir",
         raritySpecial: "Istimewa",
-        rarityLegendary: "Legenda"
+        rarityUltraRare: "Ultra Nadir",
+        rarityLegendary: "Legenda",
+        rarityUltimate: "Muktamad"
     },
     zh: {
         collectionTitle: "收集数据库",
+        extinctionCollectionTitle: "灭绝收集数据库",
         navCollection: "收藏",
         navMap: "地图",
         navProfile: "个人资料",
@@ -701,7 +837,9 @@ const translations = {
         rarityRare: "稀有",
         rarityMegaRare: "超级稀有",
         raritySpecial: "特殊",
-        rarityLegendary: "传说"
+        rarityUltraRare: "究极稀有",
+        rarityLegendary: "传说",
+        rarityUltimate: "终极"
     }
 };
 
@@ -729,7 +867,8 @@ function applyTranslations() {
     if (!t) return;
 
     // Nav & Titles
-    if (document.getElementById('text-collection-title')) document.getElementById('text-collection-title').innerText = t.collectionTitle;
+    const titleText = currentGame === 'extinction' ? (t.extinctionCollectionTitle || t.collectionTitle) : t.collectionTitle;
+    if (document.getElementById('text-collection-title')) document.getElementById('text-collection-title').innerText = titleText;
     if (document.getElementById('nav-collection-text')) document.getElementById('nav-collection-text').innerText = t.navCollection;
     if (document.getElementById('nav-map-text')) document.getElementById('nav-map-text').innerText = t.navMap;
     if (document.getElementById('nav-profile-text')) document.getElementById('nav-profile-text').innerText = t.navProfile;
@@ -768,43 +907,109 @@ function applyTranslations() {
         { name: 'Rare', key: 'rare' },
         { name: 'Mega Rare', key: 'mega-rare' },
         { name: 'Special', key: 'special' },
-        { name: 'Legendary', key: 'legendary' }
+        { name: 'Ultra Rare', key: 'ultra-rare' },
+        { name: 'Legendary', key: 'legendary' },
+        { name: 'Ultimate', key: 'ultimate' }
     ];
 
     rarities.forEach(r => {
-        const propName = `rarity${r.name.replace(' ', '')}`;
+        const propName = `rarity${r.name.replace(/\s+/g, '')}`;
         const translatedText = t[propName] || r.name;
 
-        // 1. Update filter pill text
         const pill = document.getElementById(`rarity-text-${r.key}`);
         if (pill) pill.innerText = translatedText;
 
-        // 2. Update section header title text
         const sectionTitle = document.getElementById(`section-title-${r.key}`);
         if (sectionTitle) sectionTitle.innerText = translatedText;
 
-        // 3. Update "Select All" button text
         const selectAllBtn = document.getElementById(`select-all-${r.key}`);
         if (selectAllBtn && t.selectAll) selectAllBtn.innerText = t.selectAll;
     });
 }
 
+function applyGameUIState() {
+    const cfg = getGameConfig();
+    const isExtinction = currentGame === 'extinction';
+
+    // 1. Header switcher button states
+    const btn1 = document.getElementById('game-btn-nexomon1');
+    const btn2 = document.getElementById('game-btn-extinction');
+    const activeCls = 'px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 shadow transition whitespace-nowrap';
+    const inactiveCls = 'px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition whitespace-nowrap';
+    if (btn1) btn1.className = isExtinction ? inactiveCls : activeCls;
+    if (btn2) btn2.className = isExtinction ? activeCls : inactiveCls;
+
+    // 2. Collection Title & Rarity Pills / Sections visibility
+    applyTranslations();
+
+    const allRarityKeys = ['common', 'uncommon', 'rare', 'mega-rare', 'special', 'ultra-rare', 'legendary', 'ultimate'];
+    const activeRarityKeys = new Set(cfg.rarities.map(r => r.toLowerCase().replace(/\s+/g, '-')));
+
+    allRarityKeys.forEach(key => {
+        const pill = document.getElementById(`rarity-btn-${key}`);
+        const section = document.getElementById(`section-${key}`);
+        const show = activeRarityKeys.has(key);
+        if (pill) pill.classList.toggle('hidden', !show);
+        if (section) section.classList.toggle('hidden', !show);
+    });
+
+    // 3. Map Image & Pin Layers
+    const mapImg = document.getElementById('map-world-image');
+    if (mapImg) {
+        mapImg.src = cfg.mapImage;
+        mapImg.alt = cfg.mapAlt;
+    }
+    const pins1 = document.getElementById('map-pins-nexomon1');
+    const pins2 = document.getElementById('map-pins-extinction');
+    if (pins1) pins1.classList.toggle('hidden', isExtinction);
+    if (pins2) pins2.classList.toggle('hidden', !isExtinction);
+
+    // 4. Rebuild region list & dropdowns for active game
+    renderRegionListButtons();
+    populateMapFilterOptions();
+}
+
+function switchGame(gameId) {
+    if (!GAME_CONFIG[gameId] || currentGame === gameId) return;
+    currentGame = gameId;
+    localStorage.setItem('nexomon_active_game', currentGame);
+
+    selectedMapRegion = '';
+    mapSearchQuery = '';
+    mapHabitatFilter = '';
+    mapTypeFilter = '';
+    mapRarityFilter = '';
+
+    const mapSearchInput = document.getElementById('map-search-input');
+    if (mapSearchInput) mapSearchInput.value = '';
+
+    document.querySelectorAll('.rarity-pill').forEach(btn => {
+        btn.classList.remove('ring-2', 'border-slate-100', 'border-emerald-400', 'border-blue-400', 'border-purple-400', 'border-pink-400', 'border-amber-400', 'border-cyan-400', 'bg-slate-800/80', 'bg-slate-800', 'text-white', 'shadow-lg', 'shadow-md');
+    });
+
+    applyGameUIState();
+    renderGrid();
+    selectArea('', true);
+}
+
 // Render all rarity sections independently
 function renderGrid() {
-    const rarities = ['Common', 'Uncommon', 'Rare', 'Mega Rare', 'Special', 'Legendary'];
+    const cfg = getGameConfig();
+    const activeDb = getActiveDatabase();
+    const rarities = cfg.rarities;
     
-    let totalItemsCount = nexomonDatabase.length;
+    let totalItemsCount = activeDb.length;
     let totalCaughtCount = 0;
 
     rarities.forEach(rarity => {
-        const rarityKey = rarity.toLowerCase().replace(' ', '-');
+        const rarityKey = rarity.toLowerCase().replace(/\s+/g, '-');
         const gridEl = document.getElementById(`grid-${rarityKey}`);
         const statsEl = document.getElementById(`section-stats-${rarityKey}`);
         
         if (!gridEl) return;
         gridEl.innerHTML = '';
 
-        const rarityItems = nexomonDatabase.filter(n => n.rarity === rarity);
+        const rarityItems = activeDb.filter(n => n.rarity === rarity);
         
         const filteredItems = rarityItems.filter(nexo => {
             const matchesStatus = 
@@ -844,7 +1049,7 @@ function renderGrid() {
                     </span>
                 </div>
                 <div class="w-32 h-32 my-2 flex items-center justify-center relative">
-                    <img src="${nexo.image}" alt="${nexo.name}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img src="${nexo.image}" alt="${nexo.name}" loading="lazy" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <span class="text-slate-600 dark:text-slate-400 text-xs font-semibold hidden">[Sprite]</span>
                 </div>
                 <div class="text-center w-full">
@@ -884,10 +1089,10 @@ function filterStatus(status) {
 }
 
 function filterRarity(rarity) {
-    const rarityKey = rarity.toLowerCase().replace(' ', '-');
+    const rarityKey = rarity.toLowerCase().replace(/\s+/g, '-');
     
     document.querySelectorAll('.rarity-pill').forEach(btn => {
-        btn.classList.remove('ring-2', 'border-slate-100', 'border-emerald-400', 'border-blue-400', 'border-purple-400', 'border-pink-400', 'border-amber-400', 'bg-slate-800', 'text-white', 'shadow-lg');
+        btn.classList.remove('ring-2', 'border-slate-100', 'border-emerald-400', 'border-blue-400', 'border-purple-400', 'border-pink-400', 'border-amber-400', 'border-cyan-400', 'bg-slate-800/80', 'bg-slate-800', 'text-white', 'shadow-lg', 'shadow-md');
     });
     
     const activeBtn = document.getElementById(`rarity-btn-${rarityKey}`);
@@ -896,8 +1101,9 @@ function filterRarity(rarity) {
         if (rarity === 'Uncommon') pillBorder = 'border-emerald-400';
         if (rarity === 'Rare') pillBorder = 'border-blue-400';
         if (rarity === 'Mega Rare') pillBorder = 'border-purple-400';
-        if (rarity === 'Special') pillBorder = 'border-pink-400';
+        if (rarity === 'Special' || rarity === 'Ultra Rare') pillBorder = 'border-pink-400';
         if (rarity === 'Legendary') pillBorder = 'border-amber-400';
+        if (rarity === 'Ultimate') pillBorder = 'border-cyan-400';
 
         activeBtn.classList.add('ring-2', pillBorder, 'bg-slate-800/80', 'shadow-md');
     }
@@ -940,19 +1146,29 @@ function updateGlobalStats(caughtCount, total) {
 
     const profileCountEl = document.getElementById('profile-collection-count');
     const profilePercentEl = document.getElementById('profile-collection-percent');
+    const profileTotalEl = document.getElementById('profile-collection-total');
     if (profileCountEl && profilePercentEl) {
         profileCountEl.innerText = `${caughtCount}`;
         profilePercentEl.innerText = `${percentage}%`;
     }
+    if (profileTotalEl) {
+        profileTotalEl.innerText = `${total}`;
+    }
 }
 
 function toggleSelectAll(rarity) {
-    const rarityItems = nexomonDatabase.filter(n => n.rarity === rarity);
+    const activeDb = getActiveDatabase();
+    const cfg = getGameConfig();
+    const rarityItems = activeDb.filter(n => n.rarity === rarity);
     const allCaught = rarityItems.every(n => n.caught);
     rarityItems.forEach(n => n.caught = !allCaught);
     
-    const caughtIds = nexomonDatabase.filter(n => n.caught).map(n => n.id);
-    localStorage.setItem('nexomon_collection_data', JSON.stringify(caughtIds));
+    if (currentUserId && db) {
+        saveCollectionToCloud();
+    } else {
+        const caughtIds = activeDb.filter(n => n.caught).map(n => n.id);
+        localStorage.setItem(cfg.storageKey, JSON.stringify(caughtIds));
+    }
 
     renderGrid();
     renderLocationTab();
@@ -962,5 +1178,6 @@ function toggleSelectAll(rarity) {
 loadSavedData();
 initMapData();
 initMapFilters();
+applyGameUIState();
 renderGrid();
 renderLocationTab();

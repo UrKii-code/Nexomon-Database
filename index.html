@@ -30,18 +30,24 @@
             <span id="fallback-logo" class="font-black text-xl tracking-wider text-emerald-500 hidden">NEXOMON</span>
         </div>
 
-        <!-- Right Side: Theme Toggle & Navigation Items -->
-        <div class="flex items-center gap-6 text-sm font-medium">
+        <!-- Right Side: Theme Toggle, Game Switcher & Navigation Items -->
+        <div class="flex items-center gap-3 sm:gap-5 text-sm font-medium flex-wrap justify-end">
             <!-- Theme Toggle Button -->
-            <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-amber-400 hover:text-amber-300 transition p-1.5 rounded-lg bg-slate-800/50 dark:bg-slate-800/50 bg-slate-200">
+            <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-amber-400 hover:text-amber-300 transition p-1.5 rounded-lg bg-slate-800/50 dark:bg-slate-800/50 bg-slate-200 shrink-0" title="Toggle Dark/Light Theme">
                 <!-- Sun Icon -->
                 <svg id="theme-icon-sun" class="w-5 h-5 block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2m-4.22-7.78l1.42-1.42M6.34 17.66l-1.42 1.42"></path></svg>
                 <!-- Moon Icon -->
                 <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
 
+            <!-- Game Database Switcher (between dark/light button and Collections) -->
+            <div id="game-switcher" class="flex items-center bg-slate-950/80 dark:bg-slate-950/80 bg-slate-200 border border-slate-700/80 rounded-lg p-0.5 text-xs font-bold shrink-0">
+                <button onclick="switchGame('nexomon1')" id="game-btn-nexomon1" class="px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 shadow transition whitespace-nowrap">Nexomon</button>
+                <button onclick="switchGame('extinction')" id="game-btn-extinction" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition whitespace-nowrap">Extinction</button>
+            </div>
+
             <!-- Navigation Links -->
-            <nav class="flex items-center gap-6">
+            <nav class="flex items-center gap-4 sm:gap-6">
                 <button onclick="switchTab('collection')" id="nav-collection" class="flex items-center gap-2 text-amber-500 transition font-semibold">
                     <span>📚</span> <span id="nav-collection-text">Collections</span>
                 </button>
@@ -99,7 +105,9 @@
                     <button onclick="filterRarity('Rare')" id="rarity-btn-rare" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-blue-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-rare">Rare</span></button>
                     <button onclick="filterRarity('Mega Rare')" id="rarity-btn-mega-rare" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-purple-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-mega-rare">Mega Rare</span></button>
                     <button onclick="filterRarity('Special')" id="rarity-btn-special" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-pink-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-special">Special</span></button>
+                    <button onclick="filterRarity('Ultra Rare')" id="rarity-btn-ultra-rare" class="rarity-pill hidden px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-pink-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-ultra-rare">Ultra Rare</span></button>
                     <button onclick="filterRarity('Legendary')" id="rarity-btn-legendary" class="rarity-pill px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-amber-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-legendary">Legendary</span></button>
+                    <button onclick="filterRarity('Ultimate')" id="rarity-btn-ultimate" class="rarity-pill hidden px-4 py-2 rounded-xl text-sm font-bold bg-slate-900 border border-slate-800 text-cyan-400 hover:text-white whitespace-nowrap transition shadow-sm"><span id="rarity-text-ultimate">Ultimate</span></button>
                 </nav>
             </div>
 
@@ -153,7 +161,7 @@
                     <div id="grid-mega-rare" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
                 </div>
 
-                <!-- Special Section -->
+                <!-- Special Section (Nexomon 1) -->
                 <div id="section-special" class="rarity-section space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
                     <div class="flex justify-between items-end border-b border-slate-800 pb-2">
                         <div>
@@ -163,6 +171,18 @@
                         <button id="select-all-special" onclick="toggleSelectAll('Special')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
                     </div>
                     <div id="grid-special" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Ultra Rare Section (Extinction) -->
+                <div id="section-ultra-rare" class="rarity-section hidden space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-ultra-rare" class="text-xl font-black text-pink-400 tracking-wide">Ultra Rare</h2>
+                            <p id="section-stats-ultra-rare" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-ultra-rare" onclick="toggleSelectAll('Ultra Rare')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-ultra-rare" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
                 </div>
 
                 <!-- Legendary Section -->
@@ -175,6 +195,18 @@
                         <button id="select-all-legendary" onclick="toggleSelectAll('Legendary')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
                     </div>
                     <div id="grid-legendary" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <!-- Ultimate Section (Extinction) -->
+                <div id="section-ultimate" class="rarity-section hidden space-y-3 transition-all duration-300 rounded-2xl p-4 border border-transparent">
+                    <div class="flex justify-between items-end border-b border-slate-800 pb-2">
+                        <div>
+                            <h2 id="section-title-ultimate" class="text-xl font-black text-cyan-400 tracking-wide">Ultimate</h2>
+                            <p id="section-stats-ultimate" class="text-xs text-slate-400 font-medium">0 / 0 (0.00%)</p>
+                        </div>
+                        <button id="select-all-ultimate" onclick="toggleSelectAll('Ultimate')" class="text-xs font-semibold text-emerald-400 hover:underline">Select All</button>
+                    </div>
+                    <div id="grid-ultimate" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
                 </div>
             </div>
         </div>
@@ -193,9 +225,10 @@
                 <div class="w-full flex items-center justify-center overflow-hidden rounded-lg border border-slate-800/80 shadow-2xl bg-slate-950/60 p-2">
                     <!-- Inner Wrapper matches exact rendered image bounds so pins never drift -->
                     <div id="map-canvas" class="relative inline-block max-w-full">
-                        <img src="/src/assets/images/nexomon_worldmap_hd_1795166264111.jpg" alt="Nexomon World Map" referrerpolicy="no-referrer" class="block max-w-full max-h-[42vh] sm:max-h-[48vh] w-auto h-auto rounded select-none">
+                        <img id="map-world-image" src="/src/assets/images/nexomon_worldmap_hd_1795166264111.jpg" alt="Nexomon World Map" referrerpolicy="no-referrer" class="block max-w-full max-h-[42vh] sm:max-h-[48vh] w-auto h-auto rounded select-none">
 
-                        <!-- All Interactive Map Pins -->
+                        <!-- Nexomon 1 Interactive Map Pins -->
+                        <div id="map-pins-nexomon1">
                         <button onclick="selectArea('Parum')" data-region="Parum" class="map-pin absolute top-[60%] left-[14.5%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="1. Parum">
                             <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
                                 <img src="images/savepoint.png" alt="Parum Pin" class="w-full h-full object-contain select-none">
@@ -279,6 +312,94 @@
                             </div>
                             <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Palmaya Beach</span>
                         </button>
+                        </div>
+
+                        <!-- Nexomon: Extinction Interactive Map Pins -->
+                        <div id="map-pins-extinction" class="hidden">
+                        <button onclick="selectArea('Palmaya')" data-region="Palmaya" class="map-pin absolute top-[37.5%] left-[9.8%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Palmaya">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Palmaya Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Palmaya</span>
+                        </button>
+
+                        <button onclick="selectArea('Cadium')" data-region="Cadium" class="map-pin absolute top-[88.5%] left-[12.8%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Cadium">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Cadium Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Cadium</span>
+                        </button>
+
+                        <button onclick="selectArea('Hidden Village')" data-region="Hidden Village" class="map-pin absolute top-[24%] left-[24.5%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Hidden Village">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Hidden Village Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Hidden Village</span>
+                        </button>
+
+                        <button onclick="selectArea('The Orphanage')" data-region="The Orphanage" class="map-pin absolute top-[43%] left-[32%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="The Orphanage">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="The Orphanage Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">The Orphanage</span>
+                        </button>
+
+                        <button onclick="selectArea('Immortal Citadel')" data-region="Immortal Citadel" class="map-pin absolute top-[56.5%] left-[24%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Immortal Citadel">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Immortal Citadel Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Immortal Citadel</span>
+                        </button>
+
+                        <button onclick="selectArea('The Outlands')" data-region="The Outlands" class="map-pin absolute top-[54.5%] left-[36.8%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="The Outlands">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="The Outlands Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">The Outlands</span>
+                        </button>
+
+                        <button onclick="selectArea('Parum City')" data-region="Parum City" class="map-pin absolute top-[31%] left-[50%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Parum City">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Parum City Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Parum City</span>
+                        </button>
+
+                        <button onclick="selectArea('New Ignitia')" data-region="New Ignitia" class="map-pin absolute top-[87%] left-[50.5%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="New Ignitia">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="New Ignitia Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">New Ignitia</span>
+                        </button>
+
+                        <button onclick="selectArea('Frozen Lake')" data-region="Frozen Lake" class="map-pin absolute top-[53%] left-[60.2%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Frozen Lake">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Frozen Lake Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Frozen Lake</span>
+                        </button>
+
+                        <button onclick="selectArea('Lateria')" data-region="Lateria" class="map-pin absolute top-[68.5%] left-[77.5%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Lateria">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Lateria Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Lateria</span>
+                        </button>
+
+                        <button onclick="selectArea('Frozen Tundra')" data-region="Frozen Tundra" class="map-pin absolute top-[36.5%] left-[80.2%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="Frozen Tundra">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="Frozen Tundra Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">Frozen Tundra</span>
+                        </button>
+
+                        <button onclick="selectArea('The Drake Isles')" data-region="The Drake Isles" class="map-pin absolute top-[17.5%] left-[91.5%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer transition-transform duration-200 hover:scale-125 hover:z-30 focus:outline-none" title="The Drake Isles">
+                            <div class="relative w-8 h-8 xl:w-10 xl:h-10 flex items-center justify-center drop-shadow-lg rounded-full">
+                                <img src="images/savepoint.png" alt="The Drake Isles Pin" class="w-full h-full object-contain select-none">
+                            </div>
+                            <span class="pin-label pointer-events-none hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap bg-slate-950/90 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">The Drake Isles</span>
+                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,7 +539,7 @@
                 </div>
             
                 <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
-                    <p class="text-xl font-black text-slate-200">
+                    <p id="profile-collection-total" class="text-xl font-black text-slate-200">
                         310
                     </p>
                     <p id="text-total-label" class="text-xs text-slate-400 mt-1">
@@ -455,6 +576,7 @@
     </main>
 
     <script src="nexomon-data.js"></script>
+    <script src="extinction-data.js"></script>
     <script src="/firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
