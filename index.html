@@ -40,11 +40,16 @@
                 <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
 
-            <!-- Game Database Switcher (between dark/light button and Collections) -->
-            <div id="game-switcher" class="flex items-center bg-slate-950/80 dark:bg-slate-950/80 bg-slate-200 border border-slate-700/80 rounded-lg p-0.5 text-xs font-bold shrink-0">
-                <button onclick="switchGame('nexomon1')" id="game-btn-nexomon1" class="px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 shadow transition whitespace-nowrap">Nexomon</button>
-                <button onclick="switchGame('extinction')" id="game-btn-extinction" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition whitespace-nowrap">Extinction</button>
-            </div>
+            <!-- Switch Game Button (between Dark/Light Theme button and Collections tab) -->
+            <button onclick="toggleGameDatabase()" id="switch-game-btn" type="button" title="Switch Game (Current: Nexomon 1)" aria-label="Switch Game" class="flex items-center justify-center p-1.5 rounded-lg border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 dark:text-amber-300 text-amber-700 shadow-md shadow-amber-950/20 transition-all shrink-0 cursor-pointer">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="6" x2="10" y1="12" y2="12" stroke-linecap="round"></line>
+                    <line x1="8" x2="8" y1="10" y2="14" stroke-linecap="round"></line>
+                    <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"></circle>
+                    <circle cx="18" cy="11" r="1" fill="currentColor" stroke="none"></circle>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path>
+                </svg>
+            </button>
 
             <!-- Navigation Links -->
             <nav class="flex items-center gap-4 sm:gap-6">

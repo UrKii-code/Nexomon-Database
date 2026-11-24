@@ -931,13 +931,16 @@ function applyGameUIState() {
     const cfg = getGameConfig();
     const isExtinction = currentGame === 'extinction';
 
-    // 1. Header switcher button states
-    const btn1 = document.getElementById('game-btn-nexomon1');
-    const btn2 = document.getElementById('game-btn-extinction');
-    const activeCls = 'px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 shadow transition whitespace-nowrap';
-    const inactiveCls = 'px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition whitespace-nowrap';
-    if (btn1) btn1.className = isExtinction ? inactiveCls : activeCls;
-    if (btn2) btn2.className = isExtinction ? activeCls : inactiveCls;
+    // 1. Update 'Switch Game' icon-only button distinct style & tooltip
+    const switchBtn = document.getElementById('switch-game-btn');
+    if (switchBtn) {
+        switchBtn.className = isExtinction
+            ? 'flex items-center justify-center p-1.5 rounded-lg border-2 border-cyan-400/70 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 hover:from-cyan-500/30 hover:to-purple-500/30 text-cyan-300 dark:text-cyan-300 text-cyan-700 shadow-md shadow-cyan-950/20 transition-all shrink-0 cursor-pointer'
+            : 'flex items-center justify-center p-1.5 rounded-lg border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 dark:text-amber-300 text-amber-700 shadow-md shadow-amber-950/20 transition-all shrink-0 cursor-pointer';
+        switchBtn.title = isExtinction
+            ? 'Switch Game (Current: Nexomon: Extinction)'
+            : 'Switch Game (Current: Nexomon 1)';
+    }
 
     // 2. Collection Title & Rarity Pills / Sections visibility
     applyTranslations();
@@ -967,6 +970,10 @@ function applyGameUIState() {
     // 4. Rebuild region list & dropdowns for active game
     renderRegionListButtons();
     populateMapFilterOptions();
+}
+
+function toggleGameDatabase() {
+    switchGame(currentGame === 'extinction' ? 'nexomon1' : 'extinction');
 }
 
 function switchGame(gameId) {
